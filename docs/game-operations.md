@@ -6,7 +6,7 @@
 
 ## 一、游戏概念总览
 
-本项目是 **Blood on the Clocktower（暗流涌动）** 的在线改编版（UBOTC）。核心角色分为：
+本项目是 **Blood on the Clocktower** 的在线改编版（UBOTC）。核心角色分为：
 
 | 角色 | 说明 |
 |------|------|
@@ -18,7 +18,7 @@
 - `Player` — 包含 `id, name, image, role, isDead, isVoteless, reminders, stReminders, votes, pronouns, chatGroup, isTalking, isWraith, isUsingWraith, isAllowRole` 等
 - `Session` — 房间会话状态，包含 `sessionId, seatId, playerId, nomination, votes, lockedVote, votingSpeed, isNight, isSecretVote, isReview, timer` 等
 - `Grimoire` — 游戏全局开关（夜间/白天、静音、缩放等）
-- `Fabled` — 传奇角色列表，第一个始终是说书人
+- `Fabled` — 第一个始终是说书人
 
 ---
 
@@ -82,7 +82,7 @@
 | `distributeRoles()` | `direct` | 各玩家私信角色ID | 分发角色给所有入座玩家 |
 | `distributeTypes()` | `direct` | 各玩家私信角色类型 | 分发角色类型图标 |
 | `distributeBluffs({all, role, seatNum, playerId})` | `bluff` / `direct` | 恶魔伪装名单 | 分发伪装给恶魔/疯子/爪牙 |
-| `distributeGrimoire({all, role, seatNum, playerId})` | `grimoire` / `direct` | 全部角色+提醒标记 | 分发魔典（全视之书）给特定角色 |
+| `distributeGrimoire({all, role, seatNum, playerId})` | `grimoire` / `direct` | 全部角色+提醒标记 | 分发魔典给特定角色 |
 | `setIsRole({role, property, value})` | `isRole` / `usingRole` | 角色能力状态 | 设置角色能力状态（如亡魂） |
 
 ### 4.3 玩家属性更新
