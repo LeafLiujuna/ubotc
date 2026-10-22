@@ -1,0 +1,199 @@
+/* Material identity for individual dialogs.
+ *
+ * The shared shell in components/modals/Modal.vue is a bound leather cover with
+ * brass hinges down the spine. That is right for most dialogs, but a few belong
+ * to different objects on the Storyteller's table: the night sheet is a scroll,
+ * the reference tomes are thick gilt-edged books, the diagnostics panel is a
+ * brass instrument. Those differences live here instead of in each modal's own
+ * <style> block, because they are surface treatments on a shell those components
+ * do not own.
+ *
+ * Every rule targets `.modal-backdrop` twice, so it lands at (0,3,0) and reliably
+ * beats both Modal.vue's `.modal` (0,1,0) and the `:global(.modal-backdrop--x
+ * .modal)` (0,2,0) overrides that a few modals already carry for sizing.
+ *
+ * These are paint-only treatments. Nothing here touches the content inside a
+ * modal, because that content is written for a dark shell — flipping a
+ * thousand-line character grid onto parchment would make it unreadable. Where the
+ * plan calls for parchment, it is applied to the modal's *edges* (page block,
+ * scroll rollers) and the body is left dark and legible.
+ */
+
+/* ── Gilt-edged tome ────────────────────────────────────────────────────────────
+   The reference material: editions, the character reference, role pickers, the
+   vote history. A stack of page edges down the right-hand side, so the dialog
+   reads as one opened leaf of a thick book rather than a floating card. */
+.modal-backdrop.editions .modal,
+.modal-backdrop.characters .modal,
+.modal-backdrop.modal-backdrop--roles .modal,
+.modal-backdrop.modal-backdrop--role-select .modal,
+.modal-backdrop.modal-backdrop--vote-history .modal {
+  /* Gilt leaves seen end-on, drawn as inset shadows so no extra element or
+     pseudo-element is needed — the shell has only two and both are spoken for.
+     Inset shadows paint above the background and below content, and the slot's
+     32px right padding keeps text well clear of them.
+
+     The leather shadows have to be restated: box-shadow does not accumulate
+     across declarations, so appending means repeating. */
+  box-shadow:
+    var(--ts-shadow-lg, 0 30px 80px rgba(0, 0, 0, 0.58)),
+    var(--ts-shadow-inset-edge, inset 0 0 0 1px rgba(240, 217, 144, 0.1)),
+    inset 0 18px 42px rgba(0, 0, 0, 0.22),
+    inset 0 -60px 80px rgba(0, 0, 0, 0.4),
+    inset 0 40px 60px -40px var(--ts-glow-candle-soft, rgba(247, 208, 120, 0.16)),
+    inset -2px 0 0 rgba(241, 227, 199, 0.88),
+    inset -4px 0 0 rgba(150, 122, 82, 0.62),
+    inset -6px 0 0 rgba(233, 217, 186, 0.76),
+    inset -8px 0 0 rgba(150, 122, 82, 0.52),
+    inset -10px 0 0 rgba(225, 208, 176, 0.64);
+}
+
+.modal-backdrop.editions .modal::after,
+.modal-backdrop.characters .modal::after,
+.modal-backdrop.modal-backdrop--roles .modal::after,
+.modal-backdrop.modal-backdrop--role-select .modal::after,
+.modal-backdrop.modal-backdrop--vote-history .modal::after {
+  /* Steps the tooled border in so it does not run across the fore-edge. */
+  right: 18px;
+}
+
+/* Role selection is a compact, icon-first picker. The full fore-edge treatment
+   used by reference tomes turns into a bright vertical stripe beside the close
+   button and search field at this size, so keep the shell quiet and let the
+   role tokens carry the visual weight. */
+.modal-backdrop.modal-backdrop--role-select .modal {
+  box-shadow:
+    var(--ts-shadow-lg, 0 30px 80px rgba(0, 0, 0, 0.58)),
+    var(--ts-shadow-inset-edge, inset 0 0 0 1px rgba(240, 217, 144, 0.1)),
+    inset 0 18px 42px rgba(0, 0, 0, 0.22),
+    inset 0 -60px 80px rgba(0, 0, 0, 0.4),
+    inset 0 40px 60px -40px var(--ts-glow-candle-soft, rgba(247, 208, 120, 0.16));
+}
+
+.modal-backdrop.modal-backdrop--role-select .modal::after {
+  right: 7px;
+}
+
+/* ── Night-order scroll ─────────────────────────────────────────────────────────
+   Not a bound book: a sheet still on its rollers. Brass-capped rods across the
+   top and bottom edges, and no spine — a scroll has no hinges. */
+.modal-backdrop.modal-backdrop--night-order .modal {
+  --ts-modal-spine: none;
+
+  border-top-color: rgba(151, 114, 63, 0.8);
+  border-bottom-color: rgba(151, 114, 63, 0.8);
+}
+
+.modal-backdrop.modal-backdrop--night-order .modal::before {
+  /* Re-purposed rather than added to: the spine pseudo-element becomes the pair
+     of rollers, so the scroll costs no extra DOM either. --ts-modal-spine only
+     suppressed the *default* band, so `display` is restored here. */
+  display: block;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  z-index: 4;
+  width: auto;
+  height: 100%;
+  background-image:
+    /* upper rod */
+    linear-gradient(
+      180deg,
+      #d8bb7c 0%,
+      #a8853f 34%,
+      #6f5220 72%,
+      rgba(38, 26, 10, 0.9) 100%
+    ),
+    /* lower rod */
+    linear-gradient(
+      0deg,
+      #d8bb7c 0%,
+      #a8853f 34%,
+      #6f5220 72%,
+      rgba(38, 26, 10, 0.9) 100%
+    ),
+    /* the sheet curling away under each rod */
+    linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent);
+  background-repeat: no-repeat;
+  background-position: 0 0, 0 100%, 0 10px, 0 calc(100% - 10px);
+  background-size: 100% 10px, 100% 10px, 100% 14px, 100% 14px;
+}
+
+.modal-backdrop.modal-backdrop--night-order .modal::after {
+  /* Clears both rods so the tooled border does not cross them. */
+  inset: 14px 7px;
+}
+
+.modal-backdrop.modal-backdrop--night-order .modal-heading {
+  padding-top: calc(var(--ts-space-5, 24px) + 6px);
+}
+
+/* ── Brass instrument panel ─────────────────────────────────────────────────────
+   The game-state dump: a diagnostic read-out, not a story artefact. Riveted
+   brass, so it never gets mistaken for something in-fiction. */
+.modal-backdrop.game-state .modal {
+  --ts-modal-spine: none;
+
+  border-color: var(--ts-border-brass, rgba(151, 114, 63, 0.62));
+  box-shadow:
+    var(--ts-shadow-lg, 0 30px 80px rgba(0, 0, 0, 0.58)),
+    inset 0 1px rgba(255, 244, 209, 0.34),
+    inset 0 -1px rgba(60, 40, 12, 0.4),
+    inset 0 22px 46px rgba(0, 0, 0, 0.28);
+}
+
+.modal-backdrop.game-state .modal-heading {
+  /* Brushed brass nameplate across the top of the panel, with the four rivets
+     that hold it on. */
+  background-image:
+    radial-gradient(circle at 14px 50%, rgba(255, 248, 220, 0.5) 0 2px, rgba(74, 52, 18, 0.6) 2px 3px, transparent 3px),
+    radial-gradient(circle at calc(100% - 14px) 50%, rgba(255, 248, 220, 0.5) 0 2px, rgba(74, 52, 18, 0.6) 2px 3px, transparent 3px),
+    linear-gradient(180deg, rgba(226, 197, 132, 0.22), rgba(157, 124, 60, 0.1) 62%, transparent);
+  border-bottom-color: var(--ts-border-brass, rgba(151, 114, 63, 0.62));
+}
+
+/* ── Parchment forms ───────────────────────────────────────────────────────────
+   CreateRoomModal already paints itself as a registration sheet with its own
+   local palette; all it needs from here is the leather binding switched off,
+   since brass hinges on loose paper make no sense. */
+.modal-backdrop.modal-backdrop--create-room .modal,
+.modal-backdrop.modal-backdrop--room-apply .modal,
+.modal-backdrop.modal-backdrop--input .modal {
+  --ts-modal-spine: none;
+}
+
+@media (max-width: 640px) {
+  /* A full-width sheet pinned to the bottom edge has no fore-edge to show, and
+     the rods thin out so they do not eat the scroll's title. */
+  .modal-backdrop.editions .modal,
+  .modal-backdrop.characters .modal,
+  .modal-backdrop.modal-backdrop--roles .modal,
+  .modal-backdrop.modal-backdrop--role-select .modal,
+  .modal-backdrop.modal-backdrop--vote-history .modal {
+    box-shadow:
+      var(--ts-shadow-lg, 0 30px 80px rgba(0, 0, 0, 0.58)),
+      var(--ts-shadow-inset-edge, inset 0 0 0 1px rgba(240, 217, 144, 0.1)),
+      inset 0 18px 42px rgba(0, 0, 0, 0.22),
+      inset 0 -60px 80px rgba(0, 0, 0, 0.4),
+      inset 0 40px 60px -40px var(--ts-glow-candle-soft, rgba(247, 208, 120, 0.16));
+  }
+
+  .modal-backdrop.editions .modal::after,
+  .modal-backdrop.characters .modal::after,
+  .modal-backdrop.modal-backdrop--roles .modal::after,
+  .modal-backdrop.modal-backdrop--role-select .modal::after,
+  .modal-backdrop.modal-backdrop--vote-history .modal::after {
+    right: 7px;
+  }
+
+  .modal-backdrop.modal-backdrop--night-order .modal::before {
+    background-size: 100% 7px, 100% 7px, 100% 10px, 100% 10px;
+    background-position: 0 0, 0 100%, 0 7px, 0 calc(100% - 7px);
+  }
+
+  .modal-backdrop.modal-backdrop--night-order .modal-heading {
+    padding-top: calc(var(--ts-space-4, 16px) + 4px);
+  }
+}

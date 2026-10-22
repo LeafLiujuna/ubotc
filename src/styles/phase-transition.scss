@@ -1,0 +1,370 @@
+/* Day/night announcement overlay.
+   Component: components/PhaseTransition.vue — sequencing: composables/usePhaseTransition.ts
+
+   Global rather than scoped because the overlay teleports to <body> and the
+   `.phase-shake` utility at the bottom is applied to the room view, a different
+   component entirely.
+
+   ── Durations mirror PHASE_TIMING in usePhaseTransition.ts ──
+   Every child animation must finish *within* its stage: the stage class is
+   swapped the moment the machine's timer fires, which cancels any animation
+   still running and snaps the element to the next stage's resting values. The
+   sub-timings below are chosen so each group lands exactly on the boundary. */
+
+.phase-transition {
+  --phase-in: 640ms;
+  --phase-out: 520ms;
+  --phase-cloud-opacity: 0.68;
+
+  position: fixed;
+  inset: 0;
+  z-index: 90; /* above --ts-z-panel (60), below --ts-z-modal (100) */
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  /* Click-through by default. A cue only claims the pointer when no dialog is
+     already holding it — see modalIsOpen() in the composable. */
+  pointer-events: none;
+}
+
+.phase-transition.is-locked {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* ── Per-cue palette ──────────────────────────────────────────────────────
+   One set of custom properties per kind; every layer below reads from these
+   so a new cue is a palette entry rather than another block of rules. */
+
+.phase-transition--night {
+  --phase-wash: radial-gradient(
+      110% 80% at 50% -10%,
+      rgba(126, 148, 226, 0.34),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(12, 12, 34, 0.86), rgba(4, 4, 14, 0.94));
+  --phase-foil-top: #dfe7ff;
+  --phase-foil-bottom: #7f8fd0;
+  --phase-glow: rgba(140, 162, 240, 0.55);
+  --phase-eyebrow: rgba(196, 209, 255, 0.82);
+  --phase-body: rgba(214, 222, 250, 0.78);
+  --phase-cloud-tint: rgba(120, 140, 214, 0.9);
+  --phase-cloud-opacity: 0.72;
+}
+
+.phase-transition--day {
+  --phase-wash: radial-gradient(
+      110% 80% at 50% -6%,
+      rgba(255, 214, 138, 0.36),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(38, 26, 14, 0.72), rgba(12, 9, 6, 0.86));
+  --phase-foil-top: #ffeec2;
+  --phase-foil-bottom: #c9973f;
+  --phase-glow: rgba(232, 188, 106, 0.55);
+  --phase-eyebrow: rgba(247, 224, 172, 0.86);
+  --phase-body: rgba(246, 232, 203, 0.8);
+  --phase-cloud-tint: rgba(255, 226, 172, 0.85);
+  --phase-cloud-opacity: 0.5;
+}
+
+.phase-transition--final {
+  --phase-wash: radial-gradient(
+      120% 90% at 50% 50%,
+      rgba(142, 47, 54, 0.4),
+      transparent 62%
+    ),
+    linear-gradient(180deg, rgba(22, 6, 9, 0.9), rgba(6, 3, 4, 0.95));
+  --phase-foil-top: #ffe7b4;
+  --phase-foil-bottom: #a8323b;
+  --phase-glow: rgba(196, 66, 74, 0.6);
+  --phase-eyebrow: rgba(240, 190, 168, 0.88);
+  --phase-body: rgba(240, 217, 205, 0.8);
+  --phase-cloud-tint: rgba(150, 60, 66, 0.9);
+  --phase-cloud-opacity: 0.62;
+}
+
+.phase-transition--return {
+  --phase-wash: radial-gradient(
+      110% 80% at 50% 40%,
+      rgba(214, 184, 106, 0.3),
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(24, 18, 10, 0.78), rgba(8, 6, 4, 0.88));
+  --phase-foil-top: #ffeec2;
+  --phase-foil-bottom: #b98f3e;
+  --phase-glow: rgba(214, 184, 106, 0.52);
+  --phase-eyebrow: rgba(244, 224, 178, 0.88);
+  --phase-body: rgba(242, 231, 208, 0.8);
+  --phase-cloud-tint: rgba(214, 184, 106, 0.8);
+  --phase-cloud-opacity: 0.42;
+}
+
+/* ── Layers ─────────────────────────────────────────────────────────────── */
+
+.phase-transition__wash {
+  position: absolute;
+  inset: 0;
+  background: var(--phase-wash);
+  opacity: 0;
+}
+
+/* Two parallax cloud banks built from the one cloud plate the repo ships.
+   Blurred and heavily scaled so the seams and the plate's own resolution never
+   show; they are atmosphere, not scenery. */
+.phase-transition__clouds {
+  position: absolute;
+  left: -18%;
+  width: 136%;
+  background-image: url("@/assets/clouds.png");
+  background-repeat: repeat-x;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+.phase-transition__clouds--far {
+  --phase-cloud-from: 0%;
+  --phase-cloud-to: 42%;
+
+  top: -14%;
+  height: 92%;
+  background-size: auto 100%;
+  filter: blur(9px) saturate(0.55) brightness(0.62);
+}
+
+.phase-transition__clouds--near {
+  --phase-cloud-from: 30%;
+  --phase-cloud-to: -20%;
+  --phase-cloud-opacity: 0.5;
+
+  bottom: -22%;
+  height: 78%;
+  background-size: auto 118%;
+  filter: blur(16px) saturate(0.4) brightness(0.5);
+  transform: scaleY(-1);
+}
+
+/* Tint the greyscale plate to the cue's palette without a second image. */
+.phase-transition__clouds::after {
+  position: absolute;
+  inset: 0;
+  background: var(--phase-cloud-tint);
+  content: "";
+  mix-blend-mode: color;
+  opacity: 0.7;
+}
+
+.phase-transition__embers {
+  position: absolute;
+  inset: auto 0 0;
+  height: 62%;
+  pointer-events: none;
+}
+
+.phase-transition__embers span {
+  position: absolute;
+  bottom: 8%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ts-glow-candle, rgba(255, 206, 128, 0.9));
+  box-shadow: 0 0 10px rgba(255, 196, 116, 0.8);
+  animation: ts-ember-drift 7s ease-out infinite;
+  opacity: 0;
+}
+
+/* ── Banner ─────────────────────────────────────────────────────────────── */
+
+.phase-transition__banner {
+  position: relative;
+  display: flex;
+  max-width: min(90vw, 780px);
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px;
+  opacity: 0;
+  text-align: center;
+}
+
+.phase-transition__eyebrow {
+  margin: 0 0 10px;
+  color: var(--phase-eyebrow);
+  font-family: var(--ts-font-display);
+  font-size: clamp(0.72rem, 2.1vw, 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  /* The tracking above is applied to the right of each glyph, including the
+     last one, which shifts a centred line off-centre by half a space. */
+  text-indent: 0.42em;
+  text-transform: uppercase;
+}
+
+.phase-transition__title {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  font-family: var(--ts-font-display);
+  font-size: clamp(2.6rem, 11vw, 6.4rem);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 1.08;
+  text-indent: 0.06em;
+}
+
+/* Gold (or moonlit, or blood) leaf: the foil plate the rest of the app uses,
+   graded top-to-bottom for the cue and lit from above so the glyphs read as
+   struck metal rather than flat colour. */
+.phase-transition__title-text {
+  display: inline-block;
+  background-image: radial-gradient(
+      74% 130% at 50% 24%,
+      rgba(255, 255, 255, 0.6),
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(180deg, var(--phase-foil-top), var(--phase-foil-bottom)),
+    url("@/assets/gold-foil-texture.webp");
+  background-size: cover;
+  background-clip: text;
+  -webkit-background-clip: text;
+  /* `color` rather than `overlay` for the palette layer: the foil texture is
+     warm brass, and overlay let that warmth win, so the night banner came out
+     the same gold as the day one. Taking hue and saturation from the gradient
+     and only the grain (luminosity) from the texture keeps night moonlit and
+     the final judgement blood-red while every kind still reads as struck metal. */
+  background-blend-mode: screen, color, normal;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 24px var(--phase-glow))
+    drop-shadow(0 16px 34px rgba(0, 0, 0, 0.6));
+}
+
+/* Anything without background-clip:text would render the title invisible. */
+@supports not (
+  (-webkit-background-clip: text) or (background-clip: text)
+) {
+  .phase-transition__title-text {
+    background-image: none;
+    color: var(--phase-foil-top);
+    -webkit-text-fill-color: currentcolor;
+  }
+}
+
+.phase-transition__sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.72),
+    transparent
+  );
+  filter: blur(6px);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.phase-transition__rule {
+  width: min(360px, 62vw);
+  margin: 14px 0 12px;
+}
+
+.phase-transition__subtitle {
+  margin: 0;
+  color: var(--phase-body);
+  font-family: var(--ts-font-heading);
+  font-size: clamp(0.86rem, 2.6vw, 1.08rem);
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+
+.phase-transition__footer {
+  margin: 16px 0 0;
+  color: var(--phase-eyebrow);
+  font-family: var(--ts-font-display);
+  font-size: clamp(0.66rem, 1.9vw, 0.82rem);
+  letter-spacing: 0.54em;
+  opacity: 0.72;
+  text-indent: 0.54em;
+  text-transform: uppercase;
+}
+
+.phase-transition__hint {
+  position: absolute;
+  bottom: max(26px, env(safe-area-inset-bottom));
+  margin: 0;
+  color: var(--phase-body);
+  font-family: var(--ts-font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  opacity: 0.42;
+}
+
+/* ── Stages ─────────────────────────────────────────────────────────────── */
+
+.phase-transition.is-enter .phase-transition__wash {
+  animation: ts-phase-wash-in 300ms var(--ts-ease-out, ease) both;
+}
+
+.phase-transition.is-enter .phase-transition__clouds {
+  animation: ts-phase-clouds-in var(--phase-in) var(--ts-ease-out, ease) both;
+}
+
+.phase-transition.is-enter .phase-transition__banner {
+  /* 140ms + 500ms lands exactly on the 640ms stage boundary, so the banner is
+     fully settled the frame the machine flips to `hold`. */
+  animation: ts-phase-banner-in 500ms var(--ts-ease-out, ease) 140ms both;
+}
+
+.phase-transition.is-hold .phase-transition__wash {
+  opacity: 1;
+}
+
+.phase-transition.is-hold .phase-transition__clouds {
+  opacity: var(--phase-cloud-opacity);
+  transform: scale(1.12);
+  animation: ts-phase-clouds-drift 14s linear infinite;
+}
+
+.phase-transition.is-hold .phase-transition__clouds--near {
+  transform: scale(1.12) scaleY(-1);
+}
+
+.phase-transition.is-hold .phase-transition__banner {
+  opacity: 1;
+}
+
+.phase-transition.is-hold .phase-transition__sheen {
+  animation: ts-phase-sheen 1100ms var(--ts-ease-in-out, ease-in-out) 160ms both;
+}
+
+.phase-transition.is-exit .phase-transition__wash {
+  opacity: 1;
+  animation: ts-phase-wash-out 380ms ease-in 140ms both;
+}
+
+.phase-transition.is-exit .phase-transition__clouds {
+  opacity: var(--phase-cloud-opacity);
+  animation: ts-phase-clouds-out 440ms ease-in 80ms both;
+}
+
+.phase-transition.is-exit .phase-transition__banner {
+  opacity: 1;
+  animation: ts-phase-banner-out 380ms ease-in both;
+}
+
+.phase-transition.is-exit .phase-transition__hint {
+  opacity: 0;
+}
+
+/* ── Hall jolt ──────────────────────────────────────────────────────────────
+   Applied to the room view, not the overlay, so the table shakes underneath a
+   steady banner. Deliberately no `will-change`: the transform would otherwise
+   make this element a permanent containing block for its fixed descendants. */
+.phase-shake {
+  animation: ts-phase-shake 520ms var(--ts-ease-in-out, ease-in-out) both;
+}

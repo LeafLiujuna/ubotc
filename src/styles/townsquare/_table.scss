@@ -1,0 +1,639 @@
+/* The table proper: seat ring geometry, seat plaques, character tokens and the
+   centre emblem.
+
+   tablePositionStyle() supplies each seat's polar `left`/`top`/`width` inline,
+   but an inline offset does nothing without a containing block — so the
+   `position` declarations below are load-bearing, not decoration. They were
+   lost once already when the earlier rule block that owned them was removed as
+   dead code, which collapsed the whole ring into document flow and pushed half
+   the seats off the left edge of the viewport. */
+
+.reference-table {
+  --table-size: min(calc(100vw - 300px), 95.6vh, 1200px);
+  --table-seat-base: max(60px, 14vmin);
+  --table-seat-size: calc(var(--table-seat-base) * var(--seat-scale, 1));
+
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 50%;
+  width: var(--table-size);
+  height: var(--table-size);
+  transform: translate(-50%, -50%);
+}
+
+
+.reference-seat-group {
+  position: absolute;
+  z-index: calc(6 + var(--seat-layer, 0));
+  width: 16.4%;
+  min-width: 0;
+  max-width: none;
+  transition: left .45s ease, top .45s ease, width .45s ease;
+
+  &.seat-edit-source { opacity: .75; z-index: 60; translate: var(--seat-drag-x, 0px) var(--seat-drag-y, 0px); }
+  &.seat-edit-target .reference-seat { outline: 3px dashed #dfbc62; outline-offset: 4px; }
+
+  &.action-source {
+    z-index: 20;
+
+    .reference-seat {
+      outline: 4px solid var(--ts-accent-gold-hover, #e7cf86);
+      outline-offset: 5px;
+      box-shadow:
+        0 0 0 9px rgba(214, 184, 106, 0.18),
+        0 0 30px rgba(247, 208, 120, 0.4),
+        0 18px 34px rgba(0, 0, 0, 0.42);
+    }
+  }
+
+  &.action-target {
+    z-index: 20;
+
+    .reference-seat {
+      z-index: 8;
+      cursor: copy;
+      outline: 3px dashed rgba(143, 227, 176, 0.85);
+      outline-offset: 5px;
+      animation: ts-target-pulse 1.4s ease-in-out infinite;
+    }
+
+    // Target selection is a single-purpose mode. Keep the nearby role token
+    // from intercepting pointer input intended for the highlighted seat.
+    .reference-token {
+      pointer-events: none;
+    }
+  }
+
+  &.action-unavailable {
+    opacity: 0.42;
+  }
+}
+
+.is-seat-editing .reference-seat-reminders { display: none; }
+.is-seat-editing .reference-token { pointer-events: none; }
+.reference-seat-group.empty-seat-claimable .reference-token { pointer-events: none; }
+.reference-table.is-nominating .reference-token { pointer-events: auto; }
+.reference-token > .nomination-seat-hand,
+.reference-token > .nomination-seat-vote {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 50%;
+  width: 64%;
+  height: 64%;
+  color: #f5f3eb;
+  stroke: #29252a;
+  stroke-width: 24px;
+  paint-order: stroke;
+  filter: drop-shadow(0 2px 2px #0009);
+  pointer-events: none;
+}
+.nomination-seat-vote > svg { display: block; width: 100%; height: 100%; }
+.nomination-seat-vote { transform: translate(-50%, -50%); color: #b99ada; }
+.nomination-seat-vote.is-yes { color: #f4e7c8; }
+.reference-token > .nomination-seat-vote:not(.is-yes) { color: #b99ada; }
+.nomination-seat-vote:has(.fa-hand) { color: #ffcf3d; }
+.nomination-seat-count {
+  display: grid; place-items: center; width: 100%; height: 100%;
+  font-family: Georgia, serif; font-size: clamp(28px, 5.2vmin, 72px); font-weight: 700;
+  -webkit-text-stroke: 1px #6d5730; text-shadow: 0 2px 2px #0008;
+}
+.reference-token[aria-expanded=true] .nomination-seat-hand { visibility: hidden; }
+.nomination-execution-marker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: clamp(20px, 3vmin, 38px);
+  color: #fff0d2;
+  filter: drop-shadow(0 2px 2px #000);
+  pointer-events: none;
+  small { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reference-seat-group { transition: none; }
+}
+
+/* Both seat and token are native <button>s; strip the browser chrome so only
+   the plaque and the token art show. */
+.reference-seat,
+.reference-token {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reference-seat {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  min-height: auto;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  overflow: visible;
+  border: 2px solid #ad7fe1;
+  border-radius: 7px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-clip: padding-box;
+  background-color: #1d1714;
+  color: #24170e;
+  box-shadow: 0 0 7px #0008;
+  filter: none;
+  transition:
+    box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover,
+  &.claimed {
+    border-radius: 7px;
+    border-color: #c9a6ef;
+    box-shadow: 0 0 10px #ad7fe180;
+    filter: none;
+  }
+
+  &:hover {
+    transform: none;
+  }
+
+  &.dead {
+    opacity: 0.72;
+    filter: grayscale(0.55) brightness(0.82);
+  }
+
+  /* The seat whose vote the whole table is waiting on. */
+  &.is-vote-turn {
+    border-color: rgba(238, 195, 90, 0.96);
+    animation: ts-turn-pulse 1.8s var(--ts-ease-in-out, ease-in-out) infinite;
+  }
+
+  &.no-avatar {
+    border-radius: 7px;
+    background-image: none !important;
+  }
+
+  &:focus-visible {
+    outline: 4px solid var(--ts-focus-ring, #f0d990);
+    outline-offset: 5px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+    filter: grayscale(0.34);
+  }
+
+  .seat-chair-overlay {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 5px;
+    z-index: 2;
+    pointer-events: none;
+
+    &.flipped {
+      transform: translate(-50%, -50%) scaleX(-1);
+    }
+  }
+
+  svg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 48%;
+    height: 48%;
+    z-index: 3;
+    color: #2a1710;
+  }
+}
+
+/* One shared nameplate sits on the outside of each square seat. */
+.seat-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 14px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 120%;
+  padding: 4px 6px;
+  transform: translateX(-50%);
+  border: 2px solid #171614;
+  border-radius: 4px;
+  background: #141414bf;
+  color: #d9d9d9;
+  font-family: var(--ts-font-body, serif);
+  font-size: clamp(12px, calc(2vmin * var(--seat-scale, 1)), 24px);
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+  box-shadow: 0 1px 3px #0008;
+  &.name-outside-south {
+    top: calc(100% - 14px);
+    bottom: auto;
+  }
+}
+.seat-number, .seat-player-name, .seat-claim {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.seat-claim { font-size: .8em; }
+
+/* Night-order badge: appears top-left during night on seats with an other-night
+   order > 0. Dark-sky gradient with moonlight border to contrast the warm
+   bronze seat-number badge. Only shows when isNight is true. */
+.seat-night-order {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: clamp(32px, 2.4vw, 38px);
+  height: clamp(32px, 2.4vw, 38px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(176, 187, 217, 0.72);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #3a4a68, #1e2738 58%, #0a0d14 100%);
+  color: #dfe8ff;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: clamp(13px, 0.9vw, 17px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    0 3px 7px rgba(0, 0, 0, 0.64),
+    0 0 0 2px rgba(12, 14, 22, 0.82),
+    inset 0 0 0 1px rgba(200, 210, 240, 0.16);
+}
+
+.seat-avatar {
+  position: absolute;
+  inset: 6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background-color: #1d1714;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #ead9b8;
+  box-shadow:
+    inset 0 0 0 3px rgba(20, 14, 10, 0.94),
+    inset 0 0 0 7px rgba(222, 181, 78, 0.86),
+    inset 0 0 0 10px rgba(58, 38, 16, 0.78),
+    inset 0 -28px 34px rgba(0, 0, 0, 0.26);
+
+  svg {
+    width: 34%;
+    height: 34%;
+    padding: 16%;
+    border-radius: 50%;
+    background: rgba(78, 61, 96, 0.84);
+    color: #f3e8d6;
+    box-shadow: 0 0 0 2px rgba(238, 204, 127, 0.32);
+  }
+}
+
+/* The role disc is 80% of its square seat and points toward the centre. */
+.reference-token {
+  position: absolute;
+  left: calc(50% + var(--token-x, 0%));
+  top: calc(50% + var(--token-y, 0%));
+  z-index: 6;
+  width: 80%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  .token {
+    width: 100%;
+    height: 100%;
+    border: 2px solid #080808;
+    box-shadow: 0 0 7px #0008;
+    &:hover { border-color: #080808; box-shadow: 0 0 10px #0009; }
+  }
+  .token .icon { transform: scale(.82); }
+  &:focus-visible { outline: 2px solid #eed58e; outline-offset: 3px; }
+}
+
+/* Reminder stacks sit on the centre-facing side of the role disc. */
+.night-selecting-player .reference-token {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #080808;
+  border-radius: 50%;
+  background: #d1c8af url('@/assets/token.png') center / cover;
+  box-shadow: 0 0 7px #0008;
+  cursor: pointer;
+  pointer-events: auto;
+  &:hover, &:focus-visible { outline: 2px solid #e7ca75; outline-offset: 2px; }
+  .night-player-token { width: 48%; height: 48%; color: #77746d; filter: drop-shadow(0 1px 1px #fff8); }
+}
+
+.reference-token-stack {
+  position: absolute;
+  left: calc(50% + var(--token-x, 0%));
+  top: calc(50% + var(--token-y, 0%));
+  width: 80%;
+  min-width: 0;
+  max-width: none;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+
+  > .reference-token {
+    left: 50%;
+    top: 50%;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+.reference-token-stack:hover .death-shroud--alive { opacity: .45; }
+
+/* Raised discs may swing outside their seats while the avatars stay in place. */
+.is-revealing-grimoire .reference-seat-group:has(.is-turning) { z-index: 42; }
+.is-revealing-grimoire .reference-token { overflow: visible; border-radius: 50%; }
+
+/* Keep a seat's full reminder stack above neighbouring seat plates. The stack
+   points toward the centre and can extend well beyond the seat's own bounds. */
+.reference-seat-group:has(.reference-seat-reminders) {
+  z-index: calc(30 + var(--seat-layer, 0));
+  overflow: visible;
+}
+
+.reference-seat-group.reminder-hovered,
+.reference-seat-group:focus-within,
+.reference-seat-group.reminder-open { z-index: 40; }
+
+.reference-seat-reminders {
+  position: absolute;
+  left: calc(50% + var(--reminder-x));
+  top: calc(50% + var(--reminder-y));
+  transform: translate(-50%, -50%);
+  z-index: 12;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: visible;
+}
+
+.reference-seat-reminder {
+  position: absolute;
+  top: var(--reminder-top, 0px);
+  left: var(--reminder-left, 0px);
+  z-index: calc(20 - var(--reminder-index));
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  border: 2px solid #110d18;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #514365, #231a32 80%);
+  color: white;
+  box-shadow: 0 2px 4px #0009;
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+  line-height: 1;
+  transition:
+    left 260ms cubic-bezier(.2, .8, .2, 1),
+    top 260ms cubic-bezier(.2, .8, .2, 1),
+    opacity 180ms linear;
+  .icon {
+    position: absolute;
+    inset: 2px 8px 13px;
+    width: auto;
+    height: auto;
+    background-size: contain;
+  }
+  > span:not(.icon):not(.sr-only) {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    bottom: 5px;
+    overflow-wrap: anywhere;
+    text-shadow: 0 1px 2px #000;
+  }
+  &:focus-visible { outline: 2px solid #eed58e; outline-offset: 2px; }
+  &:disabled { cursor: default; opacity: 1; }
+}
+
+.reference-seat-reminder--add {
+  opacity: 0;
+  // Pointer proximity is handled by the table; hidden discs must not intercept
+  // nearby seat or role controls.
+  pointer-events: none;
+  background: radial-gradient(circle at 35% 25%, #49365e, #30213f 80%);
+}
+#townsquare.reminders-stacked .reference-seat-reminder { left: 0; top: 0; }
+#townsquare.reminders-spread .reference-seat-reminder,
+#townsquare .reminder-hovered .reference-seat-reminder,
+#townsquare .reference-seat-reminders:has(:focus-visible) .reference-seat-reminder,
+#townsquare .reminder-open .reference-seat-reminder {
+  left: var(--reminder-open-left, 0px);
+  top: var(--reminder-open-top, 0px);
+}
+
+.reminder-hovered .reference-seat-reminders,
+.reference-seat-reminders:has(:focus-visible),
+.reminder-open .reference-seat-reminders {
+  .reference-seat-reminder--add {
+    opacity: 1;
+    pointer-events: auto;
+    transition-duration: 260ms, 260ms, 120ms;
+  }
+}
+@media (hover: none) {
+  #townsquare .reference-seat-reminders .reference-seat-reminder {
+    left: var(--reminder-open-left, 0px);
+    top: var(--reminder-open-top, 0px);
+  }
+  .reference-seat-reminder--add {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reference-seat-reminder { transition: none; }
+}
+/* The centre emblem. Same story as the seat ring: the placement used to live in
+   the rule block that this one only repainted, so it has to be stated here.
+   `pointer-events: none` matters — the emblem overlaps the innermost seats and
+   would otherwise swallow clicks meant for them. z-index 4 keeps it under the
+   seats (6) and the sweep dial. */
+.reference-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* The reference centre is deliberately roomy: botc.app's central script
+     treatment is about 240px wide on a desktop viewport, leaving a clear gap
+     between the title and the surrounding seat tokens. */
+  width: min(240px, 32%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  color: #24170e;
+
+  /* `--ts-script-accent` is set inline by TownSquare from the current script's
+     logo (see utils/scriptAccent.ts) — a gold-wordmarked script no longer gets
+     labelled in crimson. The fallbacks keep the historical colour for any render
+     where no script is applied yet. */
+  /* No plate: the title sits straight on the emblem artwork, so all of its
+     legibility has to come from the glyphs themselves. A dark outline drawn
+     *under* the fill (`paint-order`, so the stroke never thins the strokes) plus
+     a tight drop shadow gives the edge definition a backing panel would have,
+     while the accent hue stays fully visible instead of being pushed to ink for
+     a light surface. */
+  .reference-center__script-name {
+    padding: 2px 6px;
+    background: transparent;
+    font-family: var(--ts-font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ts-script-accent, var(--ts-accent-crimson, #8e2f36));
+    paint-order: stroke fill;
+    -webkit-text-stroke: 3px rgba(12, 7, 3, 0.72);
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.6),
+      0 2px 6px rgba(0, 0, 0, 0.45),
+      0 0 14px var(--ts-script-accent-glow, rgba(155, 74, 82, 0.4));
+    line-height: 1.3;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 160px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
+    }
+    span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+
+  /* Storytellers can pick the script straight from the emblem. This is the one
+     part of the centre that takes pointer input — `pointer-events` is re-enabled
+     on the element itself, never on `.reference-center`, so the surrounding
+     emblem area keeps letting clicks through to the innermost seats beneath it. */
+  .reference-center__script-name--action {
+    appearance: none;
+    border: none;
+    background: transparent;
+    pointer-events: auto;
+    cursor: pointer;
+    transition:
+      transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      text-shadow 160ms ease;
+
+    /* With no panel to tint, hover has to be carried by the lettering: the halo
+       warms to gold and tightens, which reads as "this is clickable" without
+       introducing a box the rest of the centre does not have. */
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-2px);
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.65),
+        0 2px 5px rgba(0, 0, 0, 0.45),
+        0 0 18px rgba(214, 184, 106, 0.7);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ts-border-gold-edge, rgba(214, 184, 106, 0.66));
+      outline-offset: 3px;
+      border-radius: 12px;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .reference-center__phase {
+    min-width: 118px;
+    padding: 8px 14px;
+    border: 1px solid var(--ts-border-gold-edge, rgba(214, 184, 106, 0.66));
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(250, 236, 205, 0.9), rgba(224, 198, 148, 0.82));
+    color: #302114;
+    font-family: var(--ts-font-display);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    box-shadow:
+      0 4px 12px rgba(20, 12, 6, 0.34),
+      inset 0 1px rgba(255, 250, 233, 0.7);
+  }
+
+  .reference-center__status {
+    max-width: 220px;
+    color: #f3e2c4;
+    font-size: 13px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* At night the name keeps its own script's hue but lifted for legibility on the
+   dimmed table, and its aura swells as everything around it darkens. It used to
+   snap to a flat lilac here, which threw away the per-script colour after dusk;
+   the moonlit blue now survives only as the outermost halo, so the scene still
+   reads cool without repainting the lettering. The stroke deepens to match: the
+   night table is darker, so the daylight stroke stopped separating the glyphs
+   from it. */
+#townsquare.night .reference-center__script-name {
+  color: var(--ts-script-accent-night, #b8a8c4);
+  -webkit-text-stroke: 3px rgba(6, 4, 12, 0.8);
+  /* The first, tight shadow is what actually buys contrast — the wide halos
+     below it only paint the aura. Without it the lifted night hue bleeds into
+     its own glow and the lettering loses its edges. */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.75),
+    0 2px 5px rgba(0, 0, 0, 0.55),
+    0 0 18px var(--ts-script-accent-night-glow, rgba(184, 168, 196, 0.6)),
+    0 0 32px rgba(120, 138, 214, 0.3);
+  /* Slow vigil breathing: with the table dimmed and most players simply
+     waiting, a perfectly static centre reads as a hang. The keyframes only
+     touch `opacity` and `filter`, so the colour and stroke above survive it. */
+  animation: ts-night-vigil 5.5s var(--ts-ease-in-out, ease-in-out) infinite;
+}

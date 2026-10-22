@@ -1,0 +1,44 @@
+/* Clocktower dress for Notyf toasts.
+   Base background colours are inlined per type in services/toast/index.ts
+   (Notyf writes them as element styles); this file adds everything a style
+   sheet can own: grain, border, type, shadow. */
+
+.notyf__toast {
+  max-width: min(420px, 86vw);
+  border: 1px solid var(--ts-border-gold-edge, rgba(214, 184, 106, 0.66));
+  border-radius: var(--ts-radius-sm, 6px);
+  /* Candlelit top edge + vignette bottom, laid over the inline base colour. */
+  background-image:
+    linear-gradient(180deg, rgba(255, 240, 205, 0.16), transparent 38%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.22), transparent 46%);
+  box-shadow:
+    var(--ts-shadow-md, 0 18px 48px rgba(0, 0, 0, 0.42)),
+    inset 0 1px rgba(255, 245, 220, 0.18);
+}
+
+.notyf__wrapper {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.notyf__message {
+  color: var(--ts-text-primary, #f4ebdd);
+  font-family: var(--ts-font-ui);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.notyf__dismiss-btn {
+  opacity: 0.55;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+/* The ripple inherits the type colour; soften it so it reads as candle flare
+   rather than a material-design splash. */
+.notyf__ripple {
+  opacity: 0.85;
+}

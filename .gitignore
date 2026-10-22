@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Browser test output
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# Logs, caches and editor settings
+*.log
+logs/
+.npm-cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+nul

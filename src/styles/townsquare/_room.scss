@@ -1,0 +1,613 @@
+/* Game-table shell: the room backdrop, night/vote veils, the player profile
+   card, the tool rail and the room meta strip. Extracted from the 3300-line
+   style block that used to live inside components/TownSquare.vue.
+
+   These rules are intentionally global (unscoped), exactly as before, because
+   TownSquare renders child components that rely on them. */
+
+#townsquare {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  flex-direction: row;
+  position: relative;
+  overflow: hidden;
+  color: #f8efe1;
+}
+
+/* Placement lives here with the paint on purpose. It used to sit in an earlier
+   rule block that this one only repainted; removing that block as dead code
+   took the geometry with it, which dropped the hall out of flow and left both
+   pseudo-elements without `content` — so the clock engraving and the inner
+   brass frame stopped rendering at all. Do not split the two apart again. */
+.botc-reference-room {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  // Unlike hidden, clip cannot be scrolled when a seat receives focus. The
+  // mobile layout explicitly enables vertical scrolling in _responsive.scss.
+  overflow: clip;
+  color: #241911;
+  background:
+    linear-gradient(90deg, rgba(15, 12, 10, 0.9), transparent 5%, transparent 95%, rgba(15, 12, 10, 0.9)),
+    radial-gradient(circle at 50% 46%, rgba(255, 236, 196, 0.24), rgba(117, 91, 66, 0.2) 52%, rgba(22, 15, 12, 0.5) 82%),
+    url("@/assets/background.webp") center / cover;
+  border: 8px solid rgba(13, 10, 8, 0.92);
+  box-shadow:
+    inset 0 0 0 2px rgba(213, 174, 108, 0.34),
+    inset 0 0 120px rgba(8, 5, 10, 0.6),
+    inset 0 0 68px rgba(30, 18, 12, 0.5);
+}
+
+/* Shared base for the two decorations below: the tower clock engraving in the
+   bottom-left corner, and the brass frame inset from the hall's edge. */
+.botc-reference-room::before,
+.botc-reference-room::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+}
+
+.botc-reference-room::before {
+  top: auto;
+  left: -2%;
+  bottom: -6%;
+  width: 29%;
+  height: 44%;
+  opacity: 0.38;
+  background:
+    url("@/assets/clock-big.png") left bottom / contain no-repeat;
+  filter: contrast(1.2);
+  mix-blend-mode: multiply;
+}
+
+.botc-reference-room::after {
+  inset: 1.2% 1.1%;
+  width: auto;
+  height: auto;
+  border: 1px solid rgba(75, 49, 30, 0.45);
+  border-radius: 10px;
+  background: none;
+  opacity: 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 211, 0.32),
+    inset 0 0 54px rgba(48, 33, 22, 0.2);
+  mix-blend-mode: normal;
+}
+
+/* Moonlight and drifting clouds belong to the backdrop. The table has its own
+   higher stacking layer so portraits, tokens and labels retain their colors. */
+.reference-night-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 82% at 50% -6%,
+      rgba(117, 146, 224, 0.3),
+      transparent 66%
+    ),
+    radial-gradient(
+      90% 70% at 50% 118%,
+      rgba(28, 48, 103, 0.24),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(26, 40, 88, 0.28),
+      rgba(18, 30, 66, 0.34) 58%,
+      rgba(10, 19, 45, 0.44)
+    );
+  overflow: hidden;
+  transition: opacity 900ms var(--ts-ease-out, ease);
+}
+
+/* Two tiled cloud banks drift in opposite directions throughout the night.
+   Each bank holds two identical tiles, making the half-width loop seamless. */
+.reference-night-veil::before,
+.reference-night-veil::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 200%;
+  height: 110%;
+  background: url("@/assets/clouds.png") 0 0 / 50% 100% repeat-x;
+  mix-blend-mode: screen;
+  animation: ts-night-cloud-drift 95s linear infinite;
+  animation-play-state: paused;
+}
+
+.reference-night-veil::before {
+  top: -16%;
+  opacity: 0.28;
+  filter: blur(2px);
+}
+
+.reference-night-veil::after {
+  bottom: -22%;
+  opacity: 0.18;
+  filter: blur(5px);
+  scale: 1 -1;
+  animation-duration: 135s;
+  animation-direction: reverse;
+}
+
+#townsquare.night .reference-night-veil,
+#townsquare.revealing-grimoire .reference-night-veil {
+  opacity: 1;
+}
+
+#townsquare.night .reference-night-veil::before,
+#townsquare.night .reference-night-veil::after,
+#townsquare.revealing-grimoire .reference-night-veil::before,
+#townsquare.revealing-grimoire .reference-night-veil::after {
+  animation-play-state: running;
+}
+
+.game-view.static #townsquare .reference-night-veil::before,
+.game-view.static #townsquare .reference-night-veil::after,
+html.ts-reduce-motion #townsquare .reference-night-veil::before,
+html.ts-reduce-motion #townsquare .reference-night-veil::after {
+  animation-play-state: paused;
+}
+
+@keyframes ts-night-cloud-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #townsquare .reference-night-veil::before,
+  #townsquare .reference-night-veil::after {
+    animation-play-state: paused;
+  }
+}
+
+/* When a nomination or live vote is in progress the hall holds its breath: a
+   crimson tension vignette creeps in from the edges and a slow ember pulse
+   pulls every eye toward the accused at the table's center. Layered just above
+   the night veil (z-index:2) but below the seats, so nothing legible dims. */
+.reference-vote-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    130% 120% at 50% 50%,
+    transparent 42%,
+    var(--ts-glow-crimson, rgba(166, 60, 69, 0.42)) 100%
+  );
+  transition: opacity var(--ts-motion-slow, 320ms) var(--ts-ease-out, ease);
+}
+
+#townsquare.vote .reference-vote-veil {
+  opacity: 1;
+  animation: ts-vote-breathe 3.2s ease-in-out infinite;
+}
+
+/* The player nameplate is styled as a collectible character card: a deep
+   midnight-violet plate ringed in brass, a gold-framed portrait medallion and
+   a raised banner carrying the name. The layered box-shadow is the frame —
+   outer brass edge, inner highlight, then the drop shadow that lifts the whole
+   card off the hall photo behind it. */
+.reference-profile-card {
+  position: absolute;
+  top: 32px;
+  left: 42px;
+  z-index: 50;
+  width: 132px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 10px 13px;
+  border: 1px solid var(--ts-border-gold-edge, rgba(214, 184, 106, 0.66));
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(58, 44, 92, 0.96),
+      rgba(31, 23, 54, 0.97) 46%,
+      rgba(18, 13, 32, 0.98)
+    );
+  box-shadow:
+    0 14px 28px rgba(6, 4, 12, 0.55),
+    0 0 0 1px rgba(10, 7, 18, 0.9),
+    inset 0 1px 0 rgba(255, 240, 205, 0.28),
+    inset 0 0 22px rgba(120, 96, 190, 0.16);
+  cursor: pointer;
+}
+.reference-avatar { transform: scale(var(--ts-avatar-scale, 1)); transform-origin: center top; }
+.reference-profile-role--main { transform: scale(var(--ts-token-scale, 1)); transform-origin: top center; }
+.reference-profile-role--reminder { transform: scale(var(--ts-reminder-scale, 1)); transform-origin: top center; }
+
+.reference-profile-role-stack {
+  position: absolute;
+  top: 9px;
+  right: -38px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.reference-profile-role {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #21150e;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #f5ecd5, #cbb98f 75%, #7d6034);
+  box-shadow: 0 3px 8px rgba(0,0,0,.45), 0 0 0 1px rgba(224,183,86,.85);
+  &::before {
+    content: "";
+    position: absolute;
+    top: 62%;
+    left: 50%;
+    z-index: -1;
+    width: 30px;
+    height: 42px;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #141214, #302b31 48%, #09090a);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,.52);
+  }
+  .token { width: 100%; height: 100%; border-width: 2px; box-shadow: none; }
+  &--reminder {
+    width: 48px;
+    height: 48px;
+    background: #34205b;
+    &::before { width: 22px; height: 29px; }
+    .token { background-color: #34205b; }
+  }
+}
+.reference-profile-role--main {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+
+  .token {
+    width: 100%;
+    height: 100%;
+    cursor: default;
+  }
+}
+.reference-profile-actions {
+  position: absolute;
+  top: 8px;
+  left: calc(100% + 12px);
+  z-index: 10;
+  width: 190px;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 2px solid #090609;
+  border-radius: 10px;
+  background: rgba(24, 8, 20, .96);
+  box-shadow: 0 10px 24px rgba(0,0,0,.48);
+  &::before { content: ""; position: absolute; top: 18px; left: -10px; border-width: 7px 10px 7px 0; border-style: solid; border-color: transparent rgba(24,8,20,.96) transparent transparent; }
+  button { min-height: 34px; display: flex; align-items: center; gap: 9px; padding: 4px 7px; border: 0; border-radius: 5px; color: #fff7ed; background: transparent; cursor: pointer; font: inherit; font-size: 14px; text-align: left; &:hover { background: rgba(142,47,54,.72); } svg { width: 18px; color: #f0d990; } }
+}
+
+/* Brass corner brackets, drawn as a single inset box whose top and bottom
+   borders are clipped away — cheaper than four absolutely-placed elements and
+   it scales with the card. */
+.reference-profile-card::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(214, 184, 106, 0.34);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.reference-profile-card__title {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin-bottom: 6px;
+  overflow: hidden;
+  color: var(--ts-accent-gold, #d6b86a);
+  font-family: var(--ts-font-heading, serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+}
+
+/* Portrait medallion. The gold ring is a 3px border plus a pair of ring
+   shadows, so the frame keeps its weight at every responsive scale without
+   needing a separate wrapper element. */
+.reference-avatar {
+  position: relative;
+  z-index: 1;
+  width: 104px;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--ts-accent-gold, #d6b86a);
+  border-radius: 50%;
+  background-image:
+    radial-gradient(circle at 46% 32%, #6b5f52, #2c2620 62%, #100d0b);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #efe3c8;
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(24, 16, 8, 0.9),
+    0 0 14px rgba(214, 184, 106, 0.32);
+
+  &.empty {
+    background-image:
+      radial-gradient(circle at 46% 32%, #6b5f52, #2c2620 62%, #100d0b);
+  }
+
+  svg {
+    font-size: 40px;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  }
+}
+
+/* Name banner — a raised gold-edged strip that overlaps the bottom of the
+   portrait medallion, giving the "character card" layered depth. */
+.reference-nameplate {
+  position: relative;
+  z-index: 2;
+  width: 108px;
+  min-height: 32px;
+  margin-top: -10px;
+  padding: 6px 8px 5px;
+  border: 1px solid var(--ts-border-gold-edge, rgba(214, 184, 106, 0.66));
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg,
+      rgba(214, 184, 106, 0.18) 0%,
+      rgba(45, 33, 70, 0.95) 18%,
+      rgba(27, 19, 45, 0.97)
+    );
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 240, 190, 0.22);
+  text-align: center;
+
+  span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ts-surface-parchment, #f1e3c7);
+    font-family: var(--ts-font-heading, serif);
+    font-size: 13px;
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  .reference-nameplate__life {
+    margin-top: 3px;
+    color: var(--ts-danger, #ffb8b8);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+}
+
+.reference-tool-rail {
+  position: absolute;
+  left: 12px;
+  top: 31%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 7px;
+  border: 1px solid rgba(133, 98, 57, 0.62);
+  border-radius: 9px;
+  background:
+    linear-gradient(180deg, rgba(44, 31, 20, 0.96), rgba(15, 13, 11, 0.96));
+  box-shadow:
+    0 12px 26px rgba(25, 17, 12, 0.32),
+    inset 0 0 0 1px rgba(255, 236, 179, 0.12);
+
+  button {
+    appearance: none;
+    width: 58px;
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 5px;
+    border: 1px solid var(--ts-border-brass, rgba(151, 114, 63, 0.62));
+    border-radius: 8px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 42%),
+      linear-gradient(180deg, rgba(62, 45, 30, 0.96), rgba(19, 17, 15, 0.96));
+    color: #f3ead6;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0;
+    text-shadow: 0 1px 2px #000;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+
+    svg {
+      width: 26px;
+      height: 26px;
+      color: #f3dfb4;
+      transition: color 160ms ease, transform 160ms ease;
+    }
+
+    span {
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    &:hover {
+      border-color: #dfbd78;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%),
+        linear-gradient(180deg, rgba(84, 60, 36, 0.98), rgba(27, 22, 17, 0.98));
+      box-shadow: 0 0 16px rgba(232, 199, 119, 0.16);
+      transform: translateX(2px);
+    }
+
+    &:hover svg {
+      color: #ffe6a8;
+      transform: scale(1.08);
+    }
+
+    &.is-active {
+      border-color: #e8c777;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%),
+        linear-gradient(180deg, rgba(111, 69, 42, 0.98), rgba(42, 25, 22, 0.98));
+      box-shadow:
+        0 0 0 2px rgba(232, 199, 119, 0.22),
+        0 0 20px rgba(232, 199, 119, 0.16);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ts-focus-ring, #f0d990);
+      outline-offset: 3px;
+    }
+  }
+}
+
+.reference-room-meta {
+  position: absolute;
+  top: 34px;
+  right: 26px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  color: #19110b;
+
+  > strong {
+    padding-top: 11px;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+}
+
+.reference-operation-prompt {
+  position: absolute;
+  top: 82px;
+  left: calc(50% - 118px);
+  z-index: 72;
+  pointer-events: none;
+  min-height: 48px;
+  max-width: min(620px, calc(100vw - 420px));
+  padding: 7px 8px 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(-50%);
+  color: #fff5df;
+  background:
+    linear-gradient(180deg, rgba(93, 55, 32, 0.94), rgba(27, 18, 17, 0.96)),
+    var(--ts-noise-stone);
+  border: 1px solid rgba(231, 201, 126, 0.66);
+  border-radius: var(--ts-radius-pill, 999px);
+  box-shadow: var(--ts-shadow-md, 0 18px 48px rgba(0, 0, 0, 0.42));
+  font-family: var(--ts-font-ui, sans-serif);
+
+  > svg {
+    flex: 0 0 auto;
+    color: var(--ts-accent-gold-hover, #e7cf86);
+  }
+
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.82rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  button {
+    pointer-events: auto;
+    min-width: 64px;
+    min-height: 44px;
+    padding: 7px 12px;
+    flex: 0 0 auto;
+    color: #fff6ea;
+    background: rgba(142, 47, 54, 0.54);
+    border: 1px solid rgba(255, 210, 156, 0.32);
+    border-radius: var(--ts-radius-pill, 999px);
+    cursor: pointer;
+    font: inherit;
+
+    &:focus-visible {
+      outline: 3px solid var(--ts-focus-ring, #f0d990);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.reference-settings {
+  appearance: none;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #17120e;
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+
+/* Device settings affect the game surface without altering room state. */
+.reference-table { translate: var(--ts-grimoire-offset, 0%) 0; }
+#townsquare .reference-seat { scale: var(--ts-avatar-scale, 1); }
+#townsquare .reference-token-stack > .reference-token { scale: var(--ts-token-scale, 1); }
+#townsquare .reference-seat-reminder { scale: var(--ts-reminder-scale, 1); }
+#townsquare.no-night-clouds .reference-night-veil::before,
+#townsquare.no-night-clouds .reference-night-veil::after { display: none; }
+#townsquare.hide-table-avatars .reference-seat:not(.empty) { background-image: none !important; background-color: #25212b; }
+#townsquare.hide-teams .token .edition { display: none; }
+#townsquare.no-decorations .reference-seat { border-color: #292629; box-shadow: none; }
+#townsquare.no-decorations .reference-nameplate { box-shadow: none; border-image: none; background: #161416dc; }
+#townsquare.colorblind-red-green .token .icon { filter: hue-rotate(65deg) saturate(1.3); }
+#townsquare.colorblind-contrast .token { border: 3px solid #fff; }
+#townsquare.colorblind-contrast .token .icon { filter: contrast(1.8); }
+#townsquare.colorblind-contrast .token .edition { outline: 2px solid white; }
+#townsquare.nomination-focus .reference-seat-group:not(.is-nominee-focus) { opacity: .35; }
+#townsquare.nomination-focus .is-nominee-focus { z-index: 40; filter: drop-shadow(0 0 12px #edbf54); }
+.reference-tutorial { position: absolute; bottom: 30px; left: 50%; translate: -50% 0; z-index: 70; display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100% - 120px); padding: 8px 12px; color: #f5ead0; background: #181316e8; border: 1px solid #bb9757; border-radius: 6px; font-size: 12px; }
+.reference-tutorial button { flex-shrink: 0; padding: 4px 8px; color: #e6c678; background: #ffffff12; border: 1px solid #af9256; border-radius: 4px; cursor: pointer; }

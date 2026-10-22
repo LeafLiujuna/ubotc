@@ -1,0 +1,227 @@
+/* Physical materials of the clocktower table: torn parchment, sealing wax,
+   bound leather and brass trim. Every class here is a paint-only surface — it
+   sets background/border/shadow and never layout — so any element can wear one
+   without its geometry shifting.
+
+   Base surfaces (.parchment-surface, .medieval-surface) live in theme.scss;
+   these are the aged, physical variants layered on top. */
+
+/* Torn-edge parchment. The deckle mask eats the rectangle's border, so the
+   border on .parchment-surface is suppressed and the edge is drawn by an
+   inset shadow instead. */
+.parchment-surface--deckled {
+  border-color: transparent;
+  border-radius: 2px;
+  mask-image: var(--ts-mask-deckle);
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  box-shadow:
+    inset 0 0 0 1px rgba(126, 96, 52, 0.32),
+    inset 0 0 40px rgba(91, 54, 27, 0.16),
+    inset 0 1px rgba(255, 250, 233, 0.55);
+}
+
+/* Foxing — the rust-brown blooms old paper develops. Purely decorative, so it
+   rides on a pseudo-element that ignores pointer events. */
+.parchment-surface--foxed::before {
+  position: absolute;
+  border-radius: inherit;
+  background-image:
+    radial-gradient(
+      42px 30px at 14% 22%,
+      rgba(128, 78, 34, 0.13),
+      transparent 70%
+    ),
+    radial-gradient(
+      28px 22px at 82% 16%,
+      rgba(116, 66, 28, 0.11),
+      transparent 70%
+    ),
+    radial-gradient(
+      56px 38px at 68% 84%,
+      rgba(122, 74, 32, 0.1),
+      transparent 72%
+    ),
+    radial-gradient(
+      22px 18px at 33% 68%,
+      rgba(108, 60, 24, 0.12),
+      transparent 70%
+    );
+  pointer-events: none;
+  content: "";
+  inset: 0;
+}
+
+/* Ledger paper — ruled lines for tabular data (room list, vote tally). The
+   line pitch is a custom property so a row height change stays in sync. */
+.ledger-surface {
+  --ts-ledger-pitch: 34px;
+
+  position: relative;
+  color: var(--ts-text-on-parchment);
+  background-color: var(--ts-surface-parchment);
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent calc(var(--ts-ledger-pitch) - 1px),
+      rgba(90, 62, 38, 0.14) calc(var(--ts-ledger-pitch) - 1px),
+      rgba(90, 62, 38, 0.14) var(--ts-ledger-pitch)
+    ),
+    radial-gradient(
+      140% 110% at 50% 0%,
+      rgba(255, 248, 226, 0.45),
+      transparent 58%
+    ),
+    var(--ts-noise-parchment);
+  background-size: auto, auto, 256px 256px;
+}
+
+/* main.scss paints every h1–h6 in the dusk palette's cream, which is correct on
+   the dark table and washes out to near-invisible gold on paper. Headings on a
+   paper surface take the surface's ink instead, so a new parchment panel can't
+   reintroduce that low-contrast heading by omission.
+   `:where()` keeps this at one class of specificity: it beats the bare `h3`
+   element rule but still yields to any heading that names its own colour. */
+.parchment-surface,
+.ledger-surface {
+  :where(h1, h2, h3, h4, h5, h6) {
+    color: inherit;
+  }
+}
+
+/* Bound grimoire leather, for modal shells and the app backdrop. */
+.leather-surface {
+  position: relative;
+  background-color: var(--ts-surface-leather);
+  background-image:
+    radial-gradient(
+      120% 90% at 50% -10%,
+      rgba(214, 184, 106, 0.1),
+      transparent 52%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(74, 45, 34, 0.9),
+      rgba(26, 15, 13, 0.96) 62%
+    ),
+    var(--ts-noise-leather);
+  background-size: auto, auto, 200px 200px;
+  border: 1px solid rgba(120, 84, 48, 0.5);
+  border-radius: var(--ts-radius-lg);
+  box-shadow:
+    var(--ts-shadow-lg),
+    inset 0 0 0 1px rgba(214, 184, 106, 0.14),
+    inset 0 2px rgba(255, 226, 168, 0.08),
+    inset 0 -60px 80px rgba(0, 0, 0, 0.4);
+}
+
+/* Blind-tooled gold frame, inset a few pixels from the leather edge the way a
+   bookbinder stamps a border. */
+.leather-surface--tooled::after {
+  position: absolute;
+  border: 1px solid rgba(214, 184, 106, 0.28);
+  border-radius: calc(var(--ts-radius-lg) - 5px);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  content: "";
+  inset: 7px;
+}
+
+/* Brushed brass plate — buttons, badges, tool rails. */
+.brass-frame {
+  background-image: linear-gradient(
+    180deg,
+    #e2c584 0%,
+    #c2a35d 42%,
+    #9d7c3c 100%
+  );
+  border: 1px solid var(--ts-border-brass);
+  box-shadow:
+    inset 0 1px rgba(255, 244, 209, 0.6),
+    inset 0 -1px rgba(60, 40, 12, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.34);
+}
+
+/* Sealing wax, previously inlined in views/Index.vue. The conic gradient fakes
+   the uneven pour; --ts-wax-size lets callers scale it without touching layout. */
+.wax-seal {
+  --ts-wax-size: 74px;
+
+  position: relative;
+  display: grid;
+  width: var(--ts-wax-size);
+  height: var(--ts-wax-size);
+  flex: 0 0 auto;
+  place-items: center;
+  background-color: var(--ts-wax-crimson);
+  background-image:
+    radial-gradient(
+      70% 60% at 34% 28%,
+      rgba(255, 178, 168, 0.5),
+      transparent 62%
+    ),
+    conic-gradient(
+      from 20deg,
+      var(--ts-wax-crimson-lit) 0deg,
+      var(--ts-wax-crimson) 62deg,
+      var(--ts-wax-crimson-lit) 128deg,
+      var(--ts-wax-crimson) 196deg,
+      var(--ts-wax-crimson-lit) 268deg,
+      var(--ts-wax-crimson) 330deg,
+      var(--ts-wax-crimson-lit) 360deg
+    );
+  /* Irregular blob: a circle would read as a sticker, not poured wax. */
+  border-radius: 47% 53% 44% 56% / 52% 46% 54% 48%;
+  box-shadow:
+    0 5px 14px var(--ts-wax-shadow),
+    inset 0 2px 6px rgba(255, 190, 180, 0.28),
+    inset 0 -5px 12px rgba(48, 8, 10, 0.55);
+}
+
+/* The stamped device inside the wax: pressed in, so it is darker than the pour. */
+.wax-seal__imprint {
+  color: rgba(52, 10, 12, 0.82);
+  font-family: var(--ts-font-display);
+  font-size: calc(var(--ts-wax-size) * 0.42);
+  line-height: 1;
+  text-shadow:
+    0 1px rgba(255, 186, 176, 0.42),
+    0 -1px rgba(40, 6, 8, 0.5);
+  user-select: none;
+}
+
+.wax-seal--sm {
+  --ts-wax-size: 30px;
+}
+
+.wax-seal--lg {
+  --ts-wax-size: 108px;
+}
+
+/* Woodcut rule — a hand-inked horizontal divider with uneven weight. */
+.woodcut-rule {
+  height: 3px;
+  border: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--ts-ink-faded) 8%,
+    var(--ts-ink) 50%,
+    var(--ts-ink-faded) 92%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+  opacity: 0.55;
+}
+
+/* Faded-ink text on parchment, for secondary marginalia. */
+.ink-faded {
+  color: var(--ts-ink-faded);
+}

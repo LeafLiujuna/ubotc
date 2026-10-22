@@ -1,0 +1,714 @@
+:root {
+  /* Compatibility aliases for the existing game components. */
+  --ts-font-sans: var(--ts-font-ui);
+  --ts-text-color: var(--ts-text-primary);
+  --ts-danger-text: var(--ts-danger);
+  --ts-surface-3: rgba(8, 6, 12, 0.62);
+  --ts-border-color: var(--ts-border-subtle);
+  --ts-shadow-card: var(--ts-shadow-md);
+  --ts-btn-padding-y: 10px;
+  --ts-btn-padding-x: 16px;
+  --ts-btn-min-height: 44px;
+}
+
+.ts-title {
+  font-family: var(--ts-font-heading);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.card {
+  position: relative;
+  color: var(--ts-text-primary);
+  background:
+    radial-gradient(120% 80% at 50% -6%, rgba(247, 208, 120, 0.06), transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 20%),
+    linear-gradient(145deg, rgba(35, 25, 45, 0.98), rgba(12, 9, 17, 0.97));
+  border: 1px solid var(--ts-border-subtle);
+  border-radius: var(--ts-radius-lg);
+  box-shadow:
+    var(--ts-shadow-card),
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 -36px 54px rgba(4, 3, 7, 0.24);
+}
+
+.card-body {
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.form-label {
+  display: inline-block;
+  margin-block-end: 6px;
+  color: var(--ts-text-muted);
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+/* The ink line that soaks along a field's bottom edge on focus. It is a
+   background layer, not a border: inputs cannot carry pseudo-elements, and a
+   border that grew would move the box. A component's own input can opt into the
+   same treatment with class="ink-field" — it must set `background-color` rather
+   than the `background` shorthand, or it will wipe this layer out. */
+.form-control,
+.ink-field {
+  --ts-ink-line: linear-gradient(
+    90deg,
+    rgba(214, 184, 106, 0) 0%,
+    rgba(214, 184, 106, 0.62) 18%,
+    #f0d98f 50%,
+    rgba(214, 184, 106, 0.62) 82%,
+    rgba(214, 184, 106, 0) 100%
+  );
+
+  background-image: var(--ts-ink-line);
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+  background-size: 0% 2px;
+}
+
+.form-control:focus,
+.form-control:focus-visible,
+.ink-field:focus,
+.ink-field:focus-visible {
+  background-size: 100% 2px;
+}
+
+.form-control {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--ts-text-primary);
+  background-color: rgba(8, 6, 12, 0.66);
+  border: 1px solid var(--ts-border-subtle);
+  border-radius: var(--ts-radius-sm);
+  font-family: var(--ts-font-ui);
+  font-size: 1rem;
+  line-height: 1.35;
+  transition:
+    border-color var(--ts-motion-fast) ease,
+    box-shadow var(--ts-motion-fast) ease,
+    background-color var(--ts-motion-fast) ease,
+    /* The soak reads as ink spreading, so it runs slower than the ring. */
+    background-size var(--ts-motion-base) var(--ts-ease-out);
+}
+
+.form-control::placeholder {
+  color: var(--ts-text-subtle);
+  opacity: 1;
+}
+
+.form-control:hover:not(:disabled) {
+  border-color: rgba(214, 184, 106, 0.5);
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+  outline: 0;
+  border-color: var(--ts-accent-gold);
+  /* Ring kept alongside the ink line: the line alone would be a single 2px edge,
+     which is a weak focus indicator on a small field. */
+  box-shadow:
+    0 0 0 3px rgba(240, 217, 144, 0.22),
+    0 0 18px rgba(247, 208, 120, 0.14);
+}
+
+/* Red ink blooming out of the field the instant validation fails. No fill mode:
+   once the 300ms bloom finishes the declared ring below takes over again, so the
+   standing error affordance survives — including under reduced motion, where the
+   bloom collapses to nothing and only the ring and border remain. */
+.form-control[aria-invalid="true"] {
+  /* The soak turns to red ink too, so focusing a rejected field does not put a
+     reassuring gold line under an error. */
+  --ts-ink-line: linear-gradient(
+    90deg,
+    rgba(124, 34, 41, 0) 0%,
+    rgba(166, 60, 69, 0.7) 18%,
+    #c65a63 50%,
+    rgba(166, 60, 69, 0.7) 82%,
+    rgba(124, 34, 41, 0) 100%
+  );
+
+  border-color: var(--ts-accent-crimson-hover);
+  box-shadow: 0 0 0 3px rgba(166, 60, 69, 0.2);
+  animation: ts-ink-bloom 300ms var(--ts-ease-out);
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.form-help {
+  margin: 6px 0 0;
+  color: var(--ts-text-subtle);
+  font-size: 0.8125rem;
+}
+
+.field-error,
+.form-error {
+  margin: 6px 0 0;
+  color: var(--ts-danger);
+  font-size: 0.875rem;
+}
+
+/* Two layers now: the chevron, and the shared ink line underneath it. Both are
+   restated because `background-image` is a single list — dropping either one
+   would lose the chevron or break the focus soak. */
+select.form-control {
+  appearance: none;
+  padding-inline-end: 40px;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d6b86a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+    var(--ts-ink-line);
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 12px center, 50% 100%;
+  background-size: 18px 18px, 0% 2px;
+}
+
+select.form-control:focus,
+select.form-control:focus-visible {
+  background-size: 18px 18px, 100% 2px;
+}
+
+select.form-control option {
+  color: var(--ts-text-primary);
+  background: var(--ts-surface-1);
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 10px;
+  font-size: 0.9375rem;
+}
+
+.form-check-input {
+  flex: 0 0 auto;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 2px solid rgba(214, 184, 106, 0.55);
+  border-radius: 5px;
+  background: rgba(8, 6, 12, 0.5);
+  cursor: pointer;
+}
+
+.form-check-input:checked {
+  border-color: var(--ts-accent-gold);
+  background-color: var(--ts-accent-gold);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a1b18' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m20 6-11 11-5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 15px 15px;
+}
+
+.form-check-input:focus-visible {
+  outline: 3px solid var(--ts-focus-ring);
+  outline-offset: 3px;
+}
+
+.form-check-label {
+  flex: 1 1 auto;
+  color: var(--ts-text-muted);
+  cursor: pointer;
+}
+
+.btn {
+  --ts-btn-grad-top: #34283d;
+  --ts-btn-grad-bottom: #1b1422;
+  --ts-btn-grad-top-active: #241a2c;
+  --ts-btn-grad-bottom-active: #130f18;
+  --ts-btn-border-color: rgba(214, 184, 106, 0.34);
+  --ts-btn-shadow-color: rgba(0, 0, 0, 0.32);
+  --ts-btn-text-color: var(--ts-text-primary);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ts-btn-min-height);
+  gap: 8px;
+  padding: var(--ts-btn-padding-y) var(--ts-btn-padding-x);
+  color: var(--ts-btn-text-color);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 40%),
+    linear-gradient(180deg, var(--ts-btn-grad-top), var(--ts-btn-grad-bottom));
+  border: 1px solid var(--ts-btn-border-color);
+  border-radius: var(--ts-radius-md);
+  box-shadow:
+    0 6px 16px var(--ts-btn-shadow-color),
+    inset 0 1px rgba(255, 255, 255, 0.09);
+  font-family: var(--ts-font-ui);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color var(--ts-motion-fast) ease,
+    box-shadow var(--ts-motion-fast) ease,
+    color var(--ts-motion-fast) ease,
+    transform var(--ts-motion-fast) var(--ts-ease-out);
+}
+
+@media (hover: hover) {
+  .btn:hover:not(:disabled):not(.disabled) {
+    color: var(--ts-btn-text-color);
+    border-color: var(--ts-accent-gold);
+    box-shadow:
+      0 12px 26px var(--ts-btn-shadow-color),
+      0 0 0 1px rgba(214, 184, 106, 0.24),
+      0 0 18px rgba(214, 184, 106, 0.12);
+    transform: translateY(-1px);
+  }
+}
+
+.btn:active:not(:disabled):not(.disabled) {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.12), transparent 46%),
+    linear-gradient(180deg, var(--ts-btn-grad-top-active), var(--ts-btn-grad-bottom-active));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--ts-focus-ring);
+  outline-offset: 3px;
+}
+
+.btn:disabled,
+.btn.disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.52;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-sm {
+  --ts-btn-min-height: 44px;
+  --ts-btn-padding-y: 8px;
+  --ts-btn-padding-x: 12px;
+  font-size: 0.875rem;
+}
+
+.btn-md {
+  --ts-btn-min-height: 44px;
+  --ts-btn-padding-y: 10px;
+  --ts-btn-padding-x: 18px;
+  font-size: 1rem;
+}
+
+.btn-lg {
+  --ts-btn-min-height: 48px;
+  --ts-btn-padding-y: 12px;
+  --ts-btn-padding-x: 22px;
+  font-size: 1rem;
+}
+
+.btn-block,
+.w-100 {
+  width: 100%;
+}
+
+.btn-primary {
+  --ts-btn-grad-top: #f0d98f;
+  --ts-btn-grad-bottom: #b48c3b;
+  --ts-btn-grad-top-active: #c6a04c;
+  --ts-btn-grad-bottom-active: #8f6d2f;
+  --ts-btn-border-color: #f4de9b;
+  --ts-btn-shadow-color: rgba(91, 62, 15, 0.42);
+  --ts-btn-text-color: #24170f;
+
+  /* Brushed-brass sheen: a warm mid-band between the highlight and the base. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 34%),
+    linear-gradient(
+      180deg,
+      var(--ts-btn-grad-top),
+      #d8b968 46%,
+      var(--ts-btn-grad-bottom)
+    );
+  text-shadow: 0 1px 0 rgba(255, 246, 214, 0.4);
+}
+
+.btn-secondary,
+.btn-success,
+.btn-info {
+  --ts-btn-grad-top: #35293f;
+  --ts-btn-grad-bottom: #1b1422;
+  --ts-btn-grad-top-active: #241a2c;
+  --ts-btn-grad-bottom-active: #130f18;
+  --ts-btn-border-color: rgba(214, 184, 106, 0.38);
+  --ts-btn-shadow-color: rgba(0, 0, 0, 0.34);
+}
+
+.btn-danger {
+  --ts-btn-grad-top: #a63c45;
+  --ts-btn-grad-bottom: #70232a;
+  --ts-btn-grad-top-active: #70232a;
+  --ts-btn-grad-bottom-active: #55191f;
+  --ts-btn-border-color: #c65a63;
+  --ts-btn-shadow-color: rgba(79, 16, 23, 0.42);
+}
+
+/* Wax seal — reserved for the irreversible commitments: confirming a nomination,
+   ordering an execution. Pressing it squashes the wax (ts-wax-press) so the
+   action feels like stamping a document rather than clicking a control. */
+.btn-wax {
+  --ts-btn-grad-top: var(--ts-wax-crimson-lit, #a83a3f);
+  --ts-btn-grad-bottom: var(--ts-wax-crimson, #7c2229);
+  --ts-btn-grad-top-active: #8e2d33;
+  --ts-btn-grad-bottom-active: #611a20;
+  --ts-btn-border-color: rgba(226, 160, 150, 0.5);
+  --ts-btn-shadow-color: var(--ts-wax-shadow, rgba(46, 10, 12, 0.55));
+  --ts-btn-text-color: #ffeede;
+
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(40, 8, 10, 0.6);
+}
+
+/* Poured-wax grain, so two adjacent wax buttons do not look stamped from the
+   same mould. Decorative only. */
+.btn-wax::before {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 22% 28%, rgba(255, 214, 196, 0.28), transparent 44%),
+    radial-gradient(circle at 76% 74%, rgba(66, 12, 16, 0.42), transparent 52%);
+  pointer-events: none;
+  content: "";
+}
+
+.btn-wax > * {
+  position: relative;
+}
+
+.btn-wax:active:not(:disabled):not(.disabled) {
+  /* Overrides .btn's translateY: wax compresses in place instead of sinking. */
+  animation: ts-wax-press 180ms var(--ts-ease-out) both;
+  transform: none;
+}
+
+/* A socket round-trip is in flight. Pairs with `disabled` — the class only adds
+   the visual: a small brass ring turning beside the label. Under reduced motion
+   the global clamp freezes the ring; the swapped label text ("等待服务器确认…")
+   carries the state on its own. */
+.is-pending {
+  position: relative;
+  cursor: progress;
+}
+
+.is-pending::after {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border: 2px solid rgba(240, 217, 144, 0.32);
+  border-radius: 50%;
+  border-top-color: var(--ts-accent-gold, #d6b86a);
+  margin-left: 0.5em;
+  animation: ts-pending-turn 900ms linear infinite;
+  content: "";
+  vertical-align: -0.12em;
+}
+
+@keyframes ts-pending-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-outline {
+  --ts-btn-grad-top: rgba(17, 12, 24, 0.18);
+  --ts-btn-grad-bottom: rgba(17, 12, 24, 0.52);
+  --ts-btn-grad-top-active: rgba(17, 12, 24, 0.64);
+  --ts-btn-grad-bottom-active: rgba(11, 9, 16, 0.8);
+  --ts-btn-border-color: rgba(214, 184, 106, 0.46);
+  --ts-btn-shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+.btn-group {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.text-muted,
+.text-secondary {
+  color: var(--ts-text-muted);
+}
+
+.text-primary {
+  color: var(--ts-text-primary);
+}
+
+.text-danger {
+  color: var(--ts-danger);
+}
+
+/* vue-select compatibility theme */
+.v-select {
+  --ts-vs-bg: rgba(8, 6, 12, 0.66);
+  --ts-vs-bg-open: rgba(11, 9, 16, 0.98);
+  --ts-vs-text: var(--ts-text-primary);
+  --ts-vs-muted: var(--ts-text-subtle);
+  --ts-vs-border: var(--ts-border-subtle);
+  --ts-vs-border-focus: var(--ts-accent-gold);
+  --ts-vs-focus-ring: rgba(240, 217, 144, 0.2);
+  --ts-vs-option-hover: rgba(214, 184, 106, 0.16);
+  --ts-vs-tag-bg: rgba(142, 47, 54, 0.34);
+  --ts-vs-tag-border: rgba(198, 90, 99, 0.52);
+
+  color: var(--ts-vs-text);
+  font-family: var(--ts-font-ui);
+  font-size: 1rem;
+}
+
+.v-select .vs__dropdown-toggle {
+  min-height: 44px;
+  padding: 4px 9px;
+  background: var(--ts-vs-bg);
+  border: 1px solid var(--ts-vs-border);
+  border-radius: var(--ts-radius-sm);
+  transition: border-color var(--ts-motion-fast) ease, box-shadow var(--ts-motion-fast) ease;
+}
+
+.v-select.vs--open .vs__dropdown-toggle,
+.v-select.vs--focused:not(.vs--open) .vs__dropdown-toggle {
+  background: var(--ts-vs-bg-open);
+  border-color: var(--ts-vs-border-focus);
+  box-shadow: 0 0 0 3px var(--ts-vs-focus-ring);
+}
+
+.v-select .vs__selected-options {
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.v-select .vs__selected {
+  margin: 0;
+  color: var(--ts-vs-text);
+}
+
+.v-select .vs__search,
+.v-select .vs__search::placeholder {
+  margin: 0;
+  color: var(--ts-vs-muted);
+  font-size: 1rem;
+}
+
+.v-select .vs__search:focus {
+  outline: none;
+}
+
+.v-select .vs__actions {
+  padding: 0 2px 0 7px;
+}
+
+.v-select .vs__clear,
+.v-select .vs__open-indicator {
+  fill: var(--ts-vs-muted);
+}
+
+.v-select .vs__dropdown-menu {
+  margin-top: 6px;
+  padding: 4px;
+  color: var(--ts-vs-text);
+  background: rgba(17, 12, 24, 0.99);
+  border: 1px solid var(--ts-vs-border);
+  border-radius: var(--ts-radius-sm);
+  box-shadow: var(--ts-shadow-md);
+}
+
+.v-select .vs__dropdown-option {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  color: var(--ts-vs-text);
+  border-radius: 4px;
+  line-height: 1.35;
+}
+
+.v-select .vs__dropdown-option--highlight {
+  color: var(--ts-text-on-parchment);
+  background: var(--ts-accent-gold);
+}
+
+.v-select .vs__dropdown-option--selected {
+  background: var(--ts-vs-option-hover);
+}
+
+.v-select .vs__dropdown-option--disabled,
+.v-select.vs--disabled {
+  opacity: 0.5;
+}
+
+.v-select.vs--disabled .vs__dropdown-toggle {
+  cursor: not-allowed;
+}
+
+.v-select .vs__no-options {
+  padding: 10px;
+  color: var(--ts-vs-muted);
+}
+
+.v-select.vs--multiple .vs__selected {
+  padding: 3px 8px;
+  color: var(--ts-text-primary);
+  background: var(--ts-vs-tag-bg);
+  border: 1px solid var(--ts-vs-tag-border);
+  border-radius: var(--ts-radius-pill);
+}
+
+.v-select.vs--multiple .vs__deselect {
+  fill: var(--ts-text-muted);
+}
+
+.v-select.vs--loading .vs__spinner {
+  border-left-color: var(--ts-accent-gold);
+  border-top-color: var(--ts-accent-gold);
+}
+
+@media (max-width: 767px) {
+  .card-body {
+    padding: 16px;
+  }
+
+  .btn-group {
+    width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Draggable HUD handles (useDraggablePanel). A brass grip-dot bar shared by
+   the five floating table surfaces. Drag is wide-viewport only — the media
+   guard below hides the affordance where the composable ignores input anyway.
+   --------------------------------------------------------------------------- */
+.ts-drag-handle {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  padding: 6px;
+  border: 1px solid rgba(216, 172, 94, 0.4);
+  border-radius: 7px;
+  background: linear-gradient(160deg, rgba(62, 44, 30, 0.9), rgba(31, 22, 16, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ts-accent-gold, #d8ac5e);
+    outline-offset: 2px;
+  }
+}
+
+.ts-drag-handle--corner {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+/* The widened grab area — a panel's title bar. The class is added by
+   attachDraggablePanel, never by hand, so the cursor can't advertise a drag
+   the composable isn't listening for. Children keep their own cursors: only
+   the strip's own background reads as draggable. */
+.ts-drag-surface {
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  /* Interactive descendants are excluded from the drag in JS (INTERACTIVE);
+     match that here so the pointer stops promising a grab over them. */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    cursor: pointer;
+    touch-action: auto;
+  }
+}
+
+/* Top-edge grab strip for panels with no title bar of their own (the script
+   sidebar). A thin brass rule that reads as a window chrome edge. */
+.ts-drag-edge {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(216, 172, 94, 0.16),
+    rgba(216, 172, 94, 0.04) 60%,
+    transparent
+  );
+}
+
+/* While a panel is in flight: no text selection, no transition fighting. */
+.is-hud-dragging {
+  transition: none !important;
+  user-select: none;
+
+  * {
+    user-select: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .ts-drag-handle,
+  .ts-drag-edge {
+    display: none;
+  }
+
+  /* No drag below 901px, so no grab cursor either — the class stays on the
+     element because the composable is still attached and the viewport can
+     widen again without a remount. */
+  .ts-drag-surface {
+    cursor: inherit;
+    touch-action: auto;
+  }
+}
+
+/* The whisper envelope in flight (created imperatively by TownSquare, mounted
+   on body). A folded parchment with a wax dot — content-free by design. */
+.ts-whisper-envelope {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 86;
+  width: 30px;
+  height: 21px;
+  pointer-events: none;
+  border: 1px solid rgba(140, 104, 60, 0.9);
+  border-radius: 3px;
+  background:
+    /* wax seal dot on the flap crossing */
+    radial-gradient(circle at 50% 52%, rgba(142, 47, 54, 0.95) 3px, transparent 3.6px),
+    /* the flap: two diagonal creases */
+    linear-gradient(115deg, transparent 46%, rgba(140, 104, 60, 0.55) 46.5%, rgba(140, 104, 60, 0.55) 53%, transparent 53.5%) left top / 50% 60% no-repeat,
+    linear-gradient(245deg, transparent 46%, rgba(140, 104, 60, 0.55) 46.5%, rgba(140, 104, 60, 0.55) 53%, transparent 53.5%) right top / 50% 60% no-repeat,
+    linear-gradient(160deg, #efe0bd, #d9c493);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 246, 214, 0.35);
+  will-change: transform, opacity;
+}

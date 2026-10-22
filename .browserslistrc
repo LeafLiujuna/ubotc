@@ -1,0 +1,4 @@
+# Vite 5 ships native ES modules; legacy IE builds are intentionally unsupported.
+defaults and supports es6-module
+not dead
+not op_mini all

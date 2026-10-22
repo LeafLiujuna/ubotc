@@ -1,0 +1,163 @@
+/* Pure-CSS ornaments: clock ticks, engraved corners and silhouettes. No images,
+   no extra DOM beyond the elements the components already render, and nothing
+   here accepts pointer events. */
+
+/* A ring of clock ticks. The tick count follows --ts-tick-count so the same
+   class serves a 12-hour face and a 15-seat table.
+
+   repeating-conic-gradient starting at -90deg puts the first tick at 12
+   o'clock, matching the seat geometry in TownSquare (angle = -90 + step * i). */
+.clock-ticks {
+  position: absolute;
+  border-radius: 50%;
+  background-image: repeating-conic-gradient(
+    from calc(-90deg - (var(--ts-tick-width, 0.9deg) / 2)),
+    var(--ts-tick-color, rgba(214, 184, 106, 0.42)) 0deg
+      var(--ts-tick-width, 0.9deg),
+    transparent var(--ts-tick-width, 0.9deg)
+      calc(360deg / var(--ts-tick-count, 12))
+  );
+  /* Hollow out the middle so only a band of ticks shows. */
+  mask-image: radial-gradient(
+    closest-side,
+    transparent calc(100% - var(--ts-tick-length, 5%)),
+    #000 calc(100% - var(--ts-tick-length, 5%))
+  );
+  pointer-events: none;
+  inset: 0;
+}
+
+/* Heavier accent ticks every N positions (quarter marks on a clock face). */
+.clock-ticks--accent {
+  --ts-tick-width: 1.8deg;
+  --ts-tick-length: 9%;
+  --ts-tick-color: rgba(214, 184, 106, 0.68);
+}
+
+/* Engraved corner flourishes. Applied to a positioned ancestor; the two
+   pseudo-elements cover opposite corners, and a second element with
+   --ts-corner-flip rotated 180deg completes all four. */
+.filigree-corner::before,
+.filigree-corner::after {
+  position: absolute;
+  width: var(--ts-corner-size, 26px);
+  height: var(--ts-corner-size, 26px);
+  border-color: var(--ts-accent-gold);
+  border-style: solid;
+  border-width: 0;
+  opacity: 0.55;
+  pointer-events: none;
+  content: "";
+}
+
+.filigree-corner::before {
+  top: var(--ts-corner-inset, 9px);
+  left: var(--ts-corner-inset, 9px);
+  border-top-width: 1px;
+  border-left-width: 1px;
+  border-top-left-radius: 4px;
+}
+
+.filigree-corner::after {
+  right: var(--ts-corner-inset, 9px);
+  bottom: var(--ts-corner-inset, 9px);
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Laurel bracket — two curved strokes framing a heading. */
+.laurel-frame {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ts-space-3);
+}
+
+.laurel-frame::before,
+.laurel-frame::after {
+  width: var(--ts-laurel-size, 22px);
+  height: var(--ts-laurel-size, 22px);
+  flex: 0 0 auto;
+  border: 1px solid var(--ts-accent-gold);
+  opacity: 0.5;
+  content: "";
+}
+
+.laurel-frame::before {
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 60% 0 0 0;
+}
+
+.laurel-frame::after {
+  border-top-color: transparent;
+  border-left-color: transparent;
+  border-radius: 0 0 60% 0;
+}
+
+/* Perched raven, drawn as two overlapping gradients: body wedge plus beak.
+   Deliberately crude — it reads as a woodcut silhouette at small sizes. */
+.raven-silhouette {
+  position: relative;
+  width: var(--ts-raven-size, 42px);
+  height: var(--ts-raven-size, 42px);
+  background-image:
+    radial-gradient(
+      54% 40% at 42% 62%,
+      rgba(8, 5, 12, 0.92),
+      transparent 72%
+    ),
+    radial-gradient(
+      26% 22% at 64% 32%,
+      rgba(8, 5, 12, 0.92),
+      transparent 74%
+    );
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+/* Etched ink underline for parchment headings — thicker at the centre, as if
+   the nib pressed harder mid-stroke. */
+.etched-heading {
+  position: relative;
+  padding-bottom: var(--ts-space-2);
+}
+
+.etched-heading::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--ts-ink-faded) 14%,
+    var(--ts-ink) 50%,
+    var(--ts-ink-faded) 86%,
+    transparent
+  );
+  opacity: 0.42;
+  content: "";
+}
+
+/* Gutter shadow for a spread-open ledger: darkness pooling at the fold. */
+.book-gutter::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 34px;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(74, 46, 22, 0.16) 45%,
+    rgba(58, 34, 14, 0.22) 50%,
+    rgba(74, 46, 22, 0.16) 55%,
+    transparent
+  );
+  pointer-events: none;
+  content: "";
+  transform: translateX(-50%);
+}

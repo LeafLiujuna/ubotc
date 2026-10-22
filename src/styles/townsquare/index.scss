@@ -1,0 +1,16 @@
+/* Game-table styles, split out of components/TownSquare.vue.
+ *
+ * Load order is significant: _responsive.scss holds the breakpoint overrides
+ * for the table modules above it. The edge drawers follow with their own sizing. The rules are global
+ * (unscoped) — the same as when they lived in TownSquare's <style> block —
+ * because the table's child components (Player, Token, Vote) style against them.
+ */
+@forward "room";
+@forward "dial";
+@forward "table";
+@forward "side";
+@forward "overlays";
+@forward "responsive";
+
+@forward "left-tabs";
+@forward "right-reference";

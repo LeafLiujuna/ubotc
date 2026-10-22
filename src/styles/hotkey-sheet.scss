@@ -1,0 +1,89 @@
+/* `?` hotkey reference card — components/HotkeyCheatSheet.vue.
+   Global because the card teleports to <body>. */
+
+.hotkey-sheet {
+  position: fixed;
+  inset: 0;
+  /* Above the phase banner (90) — someone reading the sheet should not have it
+     swallowed by a passing announcement — and below --ts-z-modal (100). */
+  z-index: 95;
+  display: grid;
+  padding: 24px;
+  background: rgba(6, 5, 10, 0.55);
+  place-items: center;
+}
+
+.hotkey-sheet__card {
+  display: flex;
+  overflow: auto;
+  max-width: min(92vw, 560px);
+  max-height: min(84vh, 640px);
+  flex-direction: column;
+  padding: 22px 26px;
+  animation: ts-rise-in 240ms var(--ts-ease-out, ease) both;
+}
+
+.hotkey-sheet__header {
+  text-align: center;
+
+  h2 {
+    margin: 2px 0 8px;
+    font-family: var(--ts-font-display);
+    font-size: 1.3rem;
+    letter-spacing: 0.12em;
+  }
+
+  .filigree-divider {
+    width: min(280px, 70%);
+    margin: 0 auto 6px;
+  }
+}
+
+.hotkey-sheet__groups {
+  display: grid;
+  gap: 14px;
+
+  h3 {
+    margin: 8px 0 4px;
+    color: var(--ts-brass-strong, #d6b86a);
+    font-family: var(--ts-font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.3em;
+  }
+
+  ul {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    gap: 6px;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.86rem;
+  }
+}
+
+.hotkey-sheet kbd {
+  display: inline-block;
+  min-width: 2.2em;
+  padding: 2px 6px;
+  border: 1px solid var(--ts-border-gold-edge, rgba(214, 184, 106, 0.55));
+  border-radius: 5px;
+  background: linear-gradient(180deg, rgba(58, 46, 28, 0.9), rgba(30, 24, 16, 0.9));
+  box-shadow: inset 0 1px rgba(255, 240, 205, 0.22), 0 2px 3px rgba(0, 0, 0, 0.4);
+  color: var(--ts-brass-strong, #e8cf96);
+  font-family: var(--ts-font-ui);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.hotkey-sheet__footer {
+  margin-top: 16px;
+  opacity: 0.66;
+  font-size: 0.76rem;
+  text-align: center;
+}

@@ -1,0 +1,120 @@
+/* The clock face at the centre of the table: the engraved dial that
+   .reference-compass paints, plus the mounting frame for the ClockDial
+   component that renders the real brass hands on top of it.
+
+   Seat geometry note: seats start at 12 o’clock and advance clockwise
+   (angle = -90deg + step * index), so every gradient here also starts at
+   -90deg to stay in register with them. */
+
+.reference-compass {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* botc.app leaves the centre opening broad enough to read at a glance: the
+     table ring occupies almost the full viewport and the inner face tracks it
+     at roughly four fifths of the table diameter. */
+  width: 82%;
+  max-width: 760px;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 15%, rgba(74, 56, 38, 0.1) 15.4% 15.8%, transparent 16.2% 33%),
+    radial-gradient(circle, transparent 0 45%, rgba(76, 57, 38, 0.18) 45.3% 45.9%, transparent 46.2% 62%),
+    repeating-conic-gradient(from -90deg, rgba(70, 52, 34, 0.16) 0deg 0.8deg, transparent 0.8deg 30deg),
+    radial-gradient(circle at 50% 50%, rgba(241, 226, 191, 0.12), rgba(88, 68, 48, 0.08) 64%, transparent 67%);
+  opacity: 0.75;
+  pointer-events: none;
+  transition:
+    opacity var(--ts-motion-slow, 320ms) var(--ts-ease-out, ease),
+    filter var(--ts-motion-slow, 320ms) var(--ts-ease-out, ease);
+}
+
+/* The altar's warm candle pool — subtle by day, but when night falls and the
+   seats cool it swells into the sole source of warmth on the table. Purely
+   decorative (behind the emblem, pointer-events:none). */
+.reference-compass span {
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--ts-glow-candle-soft, rgba(247, 208, 120, 0.16)),
+    transparent 42%
+  );
+  opacity: 0.55;
+  transition: opacity var(--ts-motion-slow, 320ms) var(--ts-ease-out, ease);
+}
+
+#townsquare.night .reference-compass {
+  opacity: 0.92;
+  filter: drop-shadow(0 0 44px var(--ts-glow-candle, rgba(247, 208, 120, 0.55)));
+}
+
+#townsquare.night .reference-compass span {
+  opacity: 1;
+}
+
+.reference-compass::before,
+.reference-compass::after,
+.reference-compass span {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.reference-compass::before {
+  border: 1px solid rgba(76, 56, 38, 0.24);
+  transform: scale(0.68);
+}
+
+.reference-compass::after {
+  inset: 47.5%;
+  border: 1px solid rgba(73, 53, 35, 0.32);
+  box-shadow:
+    0 -190px 0 -1px rgba(72, 52, 34, 0.2),
+    190px 0 0 -1px rgba(72, 52, 34, 0.2),
+    0 190px 0 -1px rgba(72, 52, 34, 0.2),
+    -190px 0 0 -1px rgba(72, 52, 34, 0.2);
+}
+
+/* Mount for the ClockDial that draws the real hands. It shares the compass's
+   box exactly so the hands turn about the same centre the engraved dial is
+   drawn around. Nomination hands sit above the identity tokens and never
+   intercept a seat click. */
+.reference-dial-mount {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 82%;
+  max-width: 760px;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Table voting uses the seat tokens as reference points for the hands. */
+.reference-table .clock-dial__ticks {
+  display: none;
+}
+
+/* The hands are furniture by day and the only bright thing on the table when a
+   vote is running, so the sweep hand's reach is trimmed to stay inside the
+   seat ring rather than crossing under the nameplates. */
+.reference-dial-mount .clock-dial__hand--sweep,
+.reference-dial-mount .clock-dial__hand--trail {
+  --hand-scale: 0.86;
+}
+
+.reference-dial-mount .clock-dial__hand--minute {
+  --hand-scale: 0.78;
+}
+
+.reference-dial-mount .clock-dial__hand--hour {
+  --hand-scale: 0.56;
+}
+
+/* By night the brass picks up the candle pool at the centre of the table. */
+#townsquare.night .reference-dial-mount .clock-dial__hand--sweep {
+  filter: drop-shadow(0 0 10px var(--ts-glow-candle, rgba(247, 208, 120, 0.55)));
+}
+

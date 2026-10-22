@@ -1,0 +1,340 @@
+/* ClockDial — the brass clock face shared by the nomination dialog, the centre
+   of the game table and the homepage decoration.
+
+   Two things worth knowing before editing:
+
+   1. Hand rotation is a CSS transition on --hand-deg, and the component feeds it
+      an angle that only ever increases. That is what keeps the hands turning
+      clockwise past twelve o'clock, so never normalise the value into 0–360 here.
+   2. The hand sprites (clock-big.png / clock-small.png, both 832px tall) carry
+      their pivot hub at about 53% of their height, not the exact middle. Every
+      offset below is written in terms of that figure; changing one without the
+      other makes the tips wobble off the rim as they turn. */
+
+.clock-dial {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  /* The pivot's distance from the top of the hand sprite. */
+  --dial-pivot: 53%;
+  --dial-hand-opacity: 0.92;
+  transition: opacity var(--ts-motion-slow, 320ms) var(--ts-ease-out, ease);
+}
+
+.clock-dial.is-idle {
+  /* Nothing to point at — the hands recede rather than vanish, so the dial
+     still reads as part of the table furniture. */
+  opacity: 0.4;
+}
+
+.clock-dial__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ ticks -- */
+
+.clock-dial__ticks {
+  --ts-tick-length: 5%;
+  --ts-tick-color: rgba(214, 184, 106, 0.34);
+}
+
+/* A single tick lit up where the sweep hand just landed. The component
+   remounts this element on every step, which is what replays the animation. */
+.clock-dial__tick-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transform: rotate(var(--hand-deg, 0deg));
+  pointer-events: none;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 3px;
+    height: 9%;
+    border-radius: 2px;
+    background-color: var(--ts-accent-gold);
+    transform: translateX(-50%);
+    animation: ts-tick-pulse 900ms var(--ts-ease-out, ease) forwards;
+    content: "";
+  }
+}
+
+/* -------------------------------------------------------------- countdown -- */
+
+/* Time left in the current voting turn, drawn as a wedge that closes clockwise
+   from twelve o'clock. --ts-arc is driven from JS so it can resume mid-turn
+   after a reconnect and freeze when the storyteller pauses. */
+.clock-dial__countdown {
+  position: absolute;
+  inset: 7%;
+  border-radius: 50%;
+  background-image: conic-gradient(
+    from -90deg,
+    var(--ts-glow-candle, rgba(247, 208, 120, 0.55)) 0deg var(--ts-arc, 0deg),
+    transparent var(--ts-arc, 0deg)
+  );
+  /* Keep it a ring: a filled wedge would swamp the seats and the emblem. */
+  mask-image: radial-gradient(closest-side, transparent 78%, #000 78.5%);
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity var(--ts-motion-base, 220ms) var(--ts-ease-out, ease);
+}
+
+.clock-dial__countdown.is-frozen {
+  /* Paused turns read as amber-held rather than still running. */
+  opacity: 0.34;
+}
+
+/* ------------------------------------------------------------------ hands -- */
+
+.clock-dial__hand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  opacity: var(--dial-hand-opacity);
+  pointer-events: none;
+  transform-origin: 50% var(--dial-pivot);
+  /* Overshoot-and-settle lives in --ts-ease-dial; the global reduced-motion
+     block collapses this duration, leaving the hand at its true angle. */
+  transform: translate(-50%, calc(var(--dial-pivot) * -1))
+    rotate(var(--hand-deg, 0deg)) scale(var(--hand-scale, 1));
+  transition: transform var(--ts-motion-dial, 720ms) var(--ts-ease-dial, ease-out);
+  will-change: transform;
+}
+
+/* Long hand — the nominator. */
+.clock-dial--sweep .clock-dial__hand {
+  transition-duration: 180ms;
+  transition-timing-function: linear;
+}
+
+.clock-dial--vote-sweep .clock-dial__hand {
+  transition: none;
+}
+
+.clock-dial__hand--minute {
+  aspect-ratio: 141 / 832;
+  background-image: url("@/assets/clock-big.png");
+  filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.6));
+  z-index: 3;
+}
+
+/* Short hand — the nominee. Same sprite family, drawn shorter so the pair reads
+   as hour-and-minute at a glance. */
+.clock-dial__hand--hour {
+  aspect-ratio: 73 / 832;
+  --hand-scale: 0.68;
+  background-image: url("@/assets/clock-small.png");
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55));
+  z-index: 4;
+}
+
+/* Sweep hand — the seat currently voting. Drawn in CSS rather than from a
+   sprite: it needs three cheap copies for the trail. */
+.clock-dial__hand--sweep {
+  width: 3px;
+  aspect-ratio: 3 / 832;
+  background-image: linear-gradient(
+    to bottom,
+    var(--ts-accent-gold) 0%,
+    var(--ts-accent-gold) 48%,
+    var(--ts-border-brass, rgba(151, 114, 63, 0.62)) 53%,
+    transparent 56%
+  );
+  border-radius: 2px;
+  filter: drop-shadow(0 0 6px var(--ts-glow-candle, rgba(247, 208, 120, 0.55)));
+  z-index: 5;
+}
+
+/* Motion-blur ghosts. The lag is produced purely by delaying each copy's
+   transition, so there is no keyframe to keep in sync with the real hand — and
+   when reduced motion collapses the durations they land on top of it and
+   disappear. */
+.clock-dial__hand--trail {
+  width: 3px;
+  aspect-ratio: 3 / 832;
+  background-image: linear-gradient(
+    to bottom,
+    var(--ts-accent-gold) 0%,
+    var(--ts-accent-gold) 48%,
+    transparent 53%
+  );
+  opacity: calc(0.26 / var(--trail-index, 1));
+  filter: blur(calc(var(--trail-index, 1) * 0.6px));
+  transition-delay: calc(var(--trail-index, 1) * 55ms);
+  z-index: 2;
+}
+
+/* The brass nut the hands turn on. */
+.clock-dial__hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3.4%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background-image: radial-gradient(
+    circle at 38% 32%,
+    var(--ts-accent-gold-hover, #e7cf86),
+    var(--ts-border-brass, rgba(151, 114, 63, 0.62)) 62%,
+    #3a2a16
+  );
+  box-shadow:
+    0 0 0 1px rgba(38, 26, 12, 0.6),
+    0 2px 5px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Slot for whatever sits under the hands — the table emblem, the demon head on
+   the homepage, the wax seal in the nomination dialog. */
+.clock-dial__center {
+  position: absolute;
+  inset: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.clock-dial__center > * {
+  pointer-events: auto;
+}
+
+/* -------------------------------------------------------------- seat ring -- */
+
+.clock-dial__seats {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clock-dial__seat-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+/* A brass nameplate nailed to the rim. Kept a native <button> with a native
+   disabled attribute — the nomination flow's tests and screen readers both
+   depend on that. */
+.clock-dial__seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: clamp(56px, 8vmin, 84px);
+  /* Touch floor: the seat is the primary tap target during a nomination. */
+  min-height: 44px;
+  padding: 5px 8px 6px;
+  border: 1px solid var(--ts-border-brass, rgba(151, 114, 63, 0.62));
+  border-radius: 7px;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 42%),
+    linear-gradient(180deg, var(--ts-surface-2, #21182b), var(--ts-surface-1, #17111f));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 200, 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  color: var(--ts-text-primary, #f4ebdd);
+  cursor: pointer;
+  font-family: var(--ts-font-ui, inherit);
+  transition:
+    transform var(--ts-motion-base, 220ms) var(--ts-ease-out, ease),
+    border-color var(--ts-motion-base, 220ms) var(--ts-ease-out, ease),
+    box-shadow var(--ts-motion-base, 220ms) var(--ts-ease-out, ease);
+}
+
+.clock-dial__seat:hover:not(:disabled) {
+  border-color: var(--ts-accent-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 200, 0.2),
+    0 0 14px var(--ts-glow-candle, rgba(247, 208, 120, 0.55));
+  transform: translateY(-2px);
+}
+
+.clock-dial__seat:focus-visible {
+  outline: 2px solid var(--ts-accent-gold);
+  outline-offset: 2px;
+}
+
+.clock-dial__seat.is-selected {
+  border-color: var(--ts-accent-gold-hover, #e7cf86);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 44%),
+    linear-gradient(180deg, #4a3418, #2a1c0c);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 205, 0.3),
+    0 0 18px var(--ts-glow-candle, rgba(247, 208, 120, 0.55));
+}
+
+.clock-dial__seat:disabled {
+  border-color: rgba(138, 111, 60, 0.34);
+  /* Dimmed, but still above the 4.5:1 floor against the plate behind it. */
+  color: var(--ts-text-muted, #c9bca7);
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.clock-dial__seat-index {
+  color: var(--ts-accent-gold);
+  font-family: var(--ts-font-display, inherit);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+
+.clock-dial__seat-name {
+  max-width: 8ch;
+  overflow: hidden;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clock-dial__seat-state {
+  color: var(--ts-text-muted, #c9bca7);
+  font-size: 0.62rem;
+  line-height: 1.1;
+}
+
+/* --------------------------------------------------------------- variants -- */
+
+/* Table centre: the dial is decoration behind the seats, so it must never eat
+   a click meant for a seat or a token. */
+.clock-dial--sweep {
+  pointer-events: none;
+}
+
+.clock-dial--clock {
+  --dial-hand-opacity: 0.8;
+  pointer-events: none;
+}
+
+@media screen and (max-width: 600px) {
+  .clock-dial__seat {
+    min-width: clamp(46px, 13vw, 66px);
+    padding: 4px 6px 5px;
+  }
+
+  .clock-dial__seat-name {
+    max-width: 6ch;
+    font-size: 0.7rem;
+  }
+
+  .clock-dial__seat-state {
+    display: none;
+  }
+}

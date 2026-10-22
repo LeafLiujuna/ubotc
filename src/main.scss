@@ -1,0 +1,258 @@
+@use "./vars.scss" as *;
+@use "./media";
+@use "./styles/theme";
+@use "./styles/materials";
+@use "./styles/motion";
+@use "./styles/ornament";
+@use "./styles/modal-variants";
+@use "./styles/phase-transition";
+@use "./styles/hotkey-sheet";
+@use "./townsquare-ui";
+
+:root {
+  font-family: var(--ts-font-ui);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  color: var(--ts-text-primary);
+  background: var(--ts-bg-canvas);
+  font-size: 16px;
+  line-height: 1.5;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--ts-text-primary);
+  background-color: var(--ts-bg-canvas);
+  /* The grimoire desk: two candles (warm gold near the top, crimson ember off
+     to the right), pebbled leather grain, the fractal stone tooth, and the hall
+     photo sunk beneath it all. */
+  background-image:
+    radial-gradient(
+      90% 60% at 50% -6%,
+      var(--ts-glow-candle-soft),
+      transparent 55%
+    ),
+    radial-gradient(
+      70% 55% at 82% 12%,
+      var(--ts-glow-crimson),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(11, 9, 16, 0.3), rgba(7, 5, 11, 0.86)),
+    var(--ts-noise-leather),
+    var(--ts-noise-stone),
+    url("./assets/background.webp");
+  background-position: center;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat, no-repeat;
+  background-size: cover, cover, cover, 200px 200px, 256px 256px, cover;
+}
+
+/* A fixed vignette frame that deepens the corners without tinting content. */
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(
+    130% 130% at 50% 46%,
+    transparent 58%,
+    var(--ts-vignette) 100%
+  );
+}
+
+/* Candlelight breathing over the whole desk. A 60s period reads as a draught
+   in the room rather than as UI animation; the reduced-motion gate in
+   theme.scss flattens it to a static wash. */
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(
+      52% 40% at 18% 8%,
+      var(--ts-glow-candle-soft),
+      transparent 68%
+    ),
+    radial-gradient(
+      44% 36% at 88% 78%,
+      rgba(166, 60, 69, 0.14),
+      transparent 70%
+    );
+  animation: ts-candle-breathe 60s ease-in-out infinite;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--ts-font-ui);
+}
+
+button,
+input,
+select,
+textarea {
+  font-size: 1rem;
+}
+
+button,
+[role="button"],
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: var(--ts-accent-gold);
+  text-underline-offset: 0.18em;
+  transition: color var(--ts-motion-fast) ease;
+
+  &:hover {
+    color: var(--ts-accent-gold-hover);
+  }
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--ts-focus-ring);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-block: 0;
+  color: var(--ts-text-primary);
+  font-family: var(--ts-font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h1,
+h2 {
+  text-shadow: 0 2px 12px rgba(4, 3, 7, 0.55);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Themed scrollbars — thin brass rails on the dusk canvas. */
+* {
+  scrollbar-color: var(--ts-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(8, 6, 12, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--ts-border-strong), #5f4c2c);
+  border: 2px solid transparent;
+  border-radius: var(--ts-radius-pill);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--ts-accent-gold), var(--ts-accent-gold-deep));
+  background-clip: padding-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  border: 0;
+}
+
+::selection {
+  color: var(--ts-text-on-parchment);
+  background: var(--ts-accent-gold);
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* The game route intentionally bypasses PageLayout and keeps the legacy playfield locked. */
+body:has(.game-view) {
+  overflow: hidden;
+}
+
+#app:has(.game-view) {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.blur-enter-active,
+.blur-leave-active {
+  transition: opacity var(--ts-motion-base) ease, filter var(--ts-motion-base) ease;
+}
+
+.blur-enter-from,
+.blur-leave-to,
+.blur-enter,
+.blur-leave-to {
+  opacity: 0;
+  filter: blur(12px);
+}
+
+@media (max-width: 767px) {
+  body {
+    background-position: center, center, 58% center;
+  }
+
+  /* iOS zooms the page when a focused form control is below 16px. Keep the
+     visual viewport stable while typing in room chat and mobile dialogs. */
+  :where(input, select, textarea) {
+    font-size: 16px !important;
+  }
+}
+
+html.ts-reduce-motion *, html.ts-reduce-motion *::before, html.ts-reduce-motion *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important; scroll-behavior: auto !important;
+}

@@ -1,0 +1,206 @@
+/* The right sheets use a narrow name view, a full docked view and a floating view. */
+@use "edge-tab-theme" as theme;
+
+#townsquare {
+  > .right-reference-tab {
+    @include theme.edge-tab-surface;
+    position: fixed;
+    top: calc(7vh + var(--reference-index) * 42vh);
+    z-index: 89;
+    width: 32px;
+    height: calc(42vh - 6px);
+    display: grid;
+    place-items: center;
+    padding: 12px 5px;
+    font: 18px/1.1 var(--ts-font-body, serif);
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: right 160ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+  > .right-reference-sheet {
+    position: fixed;
+    top: 5vh;
+    right: 0;
+    bottom: 5vh;
+    z-index: 90;
+    max-width: calc(100vw - 40px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid #151412;
+    border-radius: 8px 0 0 8px;
+    color: #191714;
+    background: url('@/assets/sheet-ZV_08gY3.webp') center / cover #eee5ce;
+    box-shadow: 0 3px 12px #0009;
+    &.is-floating { right: auto; bottom: auto; border-radius: 8px; max-height: calc(100dvh - 24px); }
+    &.is-interacting { user-select: none; }
+  }
+  .right-sheet-enter-active, .right-sheet-leave-active { transition: transform 200ms ease, opacity 200ms ease; }
+  .right-sheet-enter-from:not(.is-floating), .right-sheet-leave-to:not(.is-floating) { transform: translateX(100%); opacity: 0; }
+  .right-sheet-enter-from.is-floating, .right-sheet-leave-to.is-floating { opacity: 0; }
+  .right-reference-heading {
+    padding: 12px 12px 8px 52px;
+    background: linear-gradient(90deg, #b66808 0 40px, transparent 40px);
+    flex: 0 0 auto;
+  }
+  .right-reference-title {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #181512;
+    font: 20px/1.25 var(--ts-font-body, serif);
+    text-align: center;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+    &:focus-visible { outline: 2px solid #785922; outline-offset: 3px; }
+  }
+  .right-reference-content {
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #776b52 #0007;
+    padding-bottom: 28px;
+    background: linear-gradient(90deg, #b66808 0 40px, transparent 40px);
+  }
+  .right-reference-tools {
+    position: absolute;
+    right: 16px;
+    bottom: 4px;
+    display: flex;
+    overflow: hidden;
+    border-radius: 5px;
+    background: #403b3299;
+    button { width: 32px; height: 26px; border: 0; border-right: 1px solid #ffffff40; background: transparent; color: #fff; font: 20px/1 sans-serif; cursor: pointer; }
+    button:hover, button:focus-visible { background: #221e16; }
+    button:disabled { opacity: .35; cursor: default; }
+  }
+  .right-reference-resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #b78e24;
+    cursor: nwse-resize;
+    touch-action: none;
+    &:hover, &:focus-visible { background: #e9c76c55; outline: 1px solid #b78e24; outline-offset: -1px; }
+  }
+  .reference-script-role-group {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    border-bottom: 1px solid #87652766;
+    h3 {
+      margin: 0;
+      display: block;
+      padding: 8px;
+      color: #f0d8a6;
+      background:
+        linear-gradient(135deg, #91360caa 0 20%, transparent 20% 68%, #db8c1466 68%),
+        url('@/assets/sheet-ZV_08gY3.webp') center / cover;
+      background-blend-mode: multiply;
+      background-color: #bb6a08;
+      font: 17px/1.1 var(--ts-font-body, serif);
+      letter-spacing: 2px;
+      text-shadow: 0 1px 1px #502400;
+      span { display: block; position: sticky; top: min(40vh, 300px); writing-mode: vertical-rl; }
+    }
+  }
+  .reference-script-role-list { padding: 3px 10px 5px 6px; }
+  .reference-script-role-entry {
+    --reference-team-color: #007ea4;
+    display: grid;
+    grid-template-columns: 38px 94px minmax(0, 1fr);
+    gap: 5px;
+    align-items: start;
+    padding: 2px 0;
+    &--minion, &--demon { --reference-team-color: #a71d28; }
+    &--traveler { --reference-team-color: #764095; }
+    &__icon {
+      width: 38px;
+      height: 38px;
+      .icon { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #57371055); }
+    }
+    &__copy {
+      min-width: 0;
+      padding-top: 2px;
+      h4 { margin: 0; color: var(--reference-team-color); font: bold 14px/1.15 var(--ts-font-ui, sans-serif); overflow-wrap: anywhere; }
+      small { display: block; color: #191714; font: 12px/1.1 var(--ts-font-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    }
+    &__ability {
+      margin: 0;
+      padding-left: 8px;
+      border-left: 2px solid var(--reference-team-color);
+      color: #191714;
+      font: 14px/1.25 var(--ts-font-ui, sans-serif);
+      overflow-wrap: anywhere;
+    }
+  }
+  .is-compact {
+    .right-reference-heading { display: none; }
+    .reference-script-role-entry { grid-template-columns: 34px minmax(0, 1fr); gap: 4px; padding: 1px 0; }
+    .reference-script-role-entry__icon { width: 34px; height: 34px; }
+    .reference-script-role-entry__ability { display: none; }
+    .reference-script-role-entry__copy small { max-width: 100%; }
+    .reference-script-role-list { padding-right: 4px; }
+  }
+  .is-floating {
+    .reference-script-role-list {
+      min-width: 0;
+      // Each team's entries flow down the first column, then the next.
+      // em keeps the column threshold in step with the sheet's zoom controls.
+      font-size: var(--reference-text-size, 14px);
+      columns: 21.5em;
+      column-gap: 1.2em;
+    }
+    .reference-script-role-entry { break-inside: avoid; grid-template-columns: 3.9em minmax(0, 1fr); column-gap: .6em; row-gap: 0; padding: .3em 0; }
+    .reference-script-role-entry__icon { grid-row: span 2; width: 3.9em; height: 3.9em; }
+    .reference-script-role-entry__copy { align-self: end; h4 { font-size: 1em; } small { font-size: .85em; } }
+    .reference-script-role-entry__copy small { display: inline; white-space: normal; }
+    .reference-script-role-entry__ability { border-left: 0; padding-left: 0; font-size: 1em; }
+  }
+  #right-night-panel {
+    container-type: inline-size;
+    .right-reference-content {
+      background: linear-gradient(135deg, #91360c55 0 18%, transparent 18% 70%, #df941866 70%) left top / 40px 320px repeat-y,
+        linear-gradient(90deg, #b66808 0 40px, transparent 40px);
+    }
+    &.is-compact .right-reference-content { background-size: 20px 240px, auto; background-image: linear-gradient(135deg, #91360c55 0 18%, transparent 18% 70%, #df941866 70%), linear-gradient(90deg, #b66808 0 20px, transparent 20px); }
+  }
+  .reference-side-panel {
+    position: fixed;
+    top: auto;
+    right: 42px;
+    bottom: 20px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+@media (max-width: 600px) {
+  #townsquare {
+    > .right-reference-sheet { top: 5vh; bottom: 5vh; }
+    .reference-script-role-entry { grid-template-columns: 38px minmax(0, 1fr); column-gap: 6px; }
+    .reference-script-role-entry__icon { grid-row: span 2; }
+    .reference-script-role-entry__copy small { display: inline; white-space: normal; }
+    .reference-script-role-entry__ability { border: 0; padding: 0; font-size: 12px; }
+    .is-floating .reference-script-role-entry { grid-template-columns: 44px minmax(0, 1fr); }
+    .is-floating .reference-script-role-entry__icon { width: 44px; height: 44px; }
+    .reference-side-panel { right: 40px; width: min(300px, calc(100vw - 80px)); }
+    .right-reference-title { font-size: 16px; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #townsquare { > .right-reference-tab, .right-sheet-enter-active, .right-sheet-leave-active { transition: none; } }
+}

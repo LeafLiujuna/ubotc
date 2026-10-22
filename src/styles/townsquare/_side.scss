@@ -1,0 +1,488 @@
+/* Night wake order and NPC controls. Right sheet layout lives in right-reference. */
+
+.reference-night-order {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.reference-night-order__hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  color: #4a382a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+
+  svg {
+    color: var(--ts-accent-crimson, #8e2f36);
+  }
+}
+
+.reference-night-section {
+  & + & {
+    margin-top: 10px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  &__toggle {
+    min-width: 0;
+    min-height: 38px;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 6px;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      background: rgba(120, 78, 40, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ts-focus-ring, #f0d990);
+      outline-offset: 2px;
+    }
+
+    svg {
+      flex: 0 0 auto;
+      color: #6a4a32;
+      transition: transform 160ms ease;
+    }
+
+    &[aria-expanded="false"] svg {
+      transform: rotate(-90deg);
+    }
+  }
+
+  &__title {
+    min-width: 0;
+    margin: 0;
+    margin-right: auto;
+    color: var(--ts-almanac-ink, #1c2d37);
+    font-size: 15px;
+    line-height: 1;
+    text-shadow: 0 1px 0 rgba(255, 250, 233, 0.4);
+  }
+
+  &__meta {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  ol {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    --night-team-color: rgba(101, 73, 43, 0.6);
+    min-height: 44px;
+    display: block;
+    padding: 2px 4px 2px 0;
+    border-left: 3px solid var(--night-team-color);
+    border-radius: 4px;
+    transition: background-color 150ms ease;
+
+    &:hover {
+      background: rgba(120, 78, 40, 0.14);
+    }
+
+    &.townsfolk {
+      --night-team-color: var(--ts-role-townsfolk, rgba(31, 101, 255, 0.5));
+    }
+    &.outsider {
+      --night-team-color: var(--ts-role-outsider, rgba(70, 213, 255, 0.55));
+    }
+    &.minion {
+      --night-team-color: var(--ts-role-minion, rgba(255, 105, 0, 0.55));
+    }
+    &.demon {
+      --night-team-color: var(--ts-role-demon, rgba(206, 1, 0, 0.6));
+    }
+    &.traveler {
+      --night-team-color: var(--ts-role-traveler, #e38aff);
+    }
+    &.fabled {
+      --night-team-color: var(--ts-role-fabled, #f4dc65);
+    }
+
+    &[data-wake-marked="true"] {
+      background:
+        linear-gradient(90deg, rgba(255, 250, 224, 0.24), transparent 74%),
+        rgba(133, 91, 38, 0.06);
+    }
+  }
+
+  .icon {
+    width: 30px;
+    height: 30px;
+    background-size: contain;
+    filter: drop-shadow(0 1px 1px rgba(50, 31, 18, 0.3));
+  }
+
+  .reference-night-item {
+    min-height: 40px;
+    display: grid;
+    grid-template-columns: 38px 22px 30px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+  }
+
+  .reference-night-item__toggle {
+    min-width: 0;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border: 0;
+    border-radius: 5px;
+    color: var(--ts-almanac-ink, #1c2d37);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      background: rgba(120, 78, 40, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ts-focus-ring, #f0d990);
+      outline-offset: 2px;
+    }
+
+    svg {
+      flex: 0 0 auto;
+      color: #6a4a32;
+      transition: transform 160ms ease;
+    }
+
+    &[aria-expanded="true"] svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  .reference-night-item__copy {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .reference-night-item__copy strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ts-almanac-ink, #1c2d37);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .reference-night-item__copy small {
+    color: #806957;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .reference-night-marker {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: rgba(101, 73, 43, 0.34);
+    background: transparent;
+    cursor: pointer;
+    transition:
+      color 160ms ease,
+      background 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+
+    svg {
+      font-size: 22px;
+    }
+
+    &:hover:not(:disabled) {
+      color: #a27a43;
+      background: rgba(255, 248, 216, 0.46);
+      transform: scale(1.04);
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ts-focus-ring, #f0d990);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.96;
+    }
+
+    &.is-marked {
+      color: #fff9e6;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.96) 0 15%, transparent 16%),
+        radial-gradient(circle at 50% 50%, #f5eee0 0 34%, #d7c5a4 35% 48%, transparent 49%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.76), transparent 70%);
+      box-shadow:
+        0 0 0 1px rgba(120, 87, 49, 0.24),
+        0 2px 8px rgba(103, 75, 39, 0.28),
+        inset 0 0 8px rgba(255, 255, 255, 0.72);
+      text-shadow: 0 1px 1px rgba(89, 61, 29, 0.42);
+    }
+  }
+
+  .reference-night-item__number {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff3dc;
+    background: linear-gradient(
+      180deg,
+      var(--ts-accent-crimson-hover, #a63c45),
+      #65242c
+    );
+    border: 1px solid rgba(79, 22, 29, 0.7);
+    border-radius: 50%;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.16);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .reference-night-item__details {
+    margin: 1px 6px 5px 98px;
+    padding: 7px 8px 8px;
+    color: #5b4637;
+    background: rgba(255, 249, 230, 0.42);
+    border: 1px solid rgba(124, 91, 53, 0.18);
+    border-radius: 5px;
+    font-size: 11px;
+    line-height: 1.45;
+
+    p {
+      margin: 0 0 5px;
+    }
+  }
+
+  .reference-night-item__players {
+    display: block;
+    color: #806957;
+    font-size: 10px;
+
+    &.is-empty {
+      opacity: 0.72;
+    }
+  }
+
+  /* The night the room is actually on gets the candle ring; the other list stays
+     quiet so the storyteller's eye lands on the one that matters. */
+  &.is-current {
+    padding: 7px 8px 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+    background: rgba(247, 208, 120, 0.16);
+    border: 1px solid rgba(142, 47, 54, 0.28);
+    border-radius: 8px;
+    box-shadow: inset 0 0 12px rgba(247, 208, 120, 0.18);
+  }
+}
+
+.reference-night-section__mark {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  background: var(--ts-accent-crimson, #8e2f36);
+  border: 1px solid #4d151b;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(142, 47, 54, 0.5);
+}
+
+.reference-night-section__current {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  color: #fff7df;
+  background: var(--ts-accent-crimson, #8e2f36);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.reference-night-section__count {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  color: #3d2c1e;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(101, 73, 43, 0.3);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.reference-night-empty {
+  display: block;
+  padding: 8px 4px;
+  color: #6a5549;
+  border-left: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* GameTableFlowControls in compact mode — the card chrome (阶段标题、同步状态、
+   开局检查、引导文案) stays in the 阶段与夜间顺序 modal; here only the advance
+   button renders, so there is no outer shell left to restyle. The component
+   still owns the label and the gate, which is why the two surfaces can never
+   disagree about when 首夜 becomes available. */
+.reference-phase-controls {
+  font-size: 13px;
+}
+
+.reference-npc-panel {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(101, 73, 43, 0.5) transparent;
+  padding: 11px 14px 13px;
+
+  .reference-npc-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  strong {
+    color: #19110c;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .reference-npc-add {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(61, 45, 31, 0.5);
+    border-radius: 6px;
+    color: #3d2d1f;
+    background: rgba(255, 250, 234, 0.42);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      border-color: rgba(101, 73, 43, 0.86);
+      background: rgba(255, 250, 234, 0.78);
+    }
+  }
+}
+
+.reference-npc-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 10px;
+
+  button,
+  .reference-npc-token {
+    appearance: none;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(61, 45, 31, 0.78);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 46% 36%, #594f44, #2a251f 66%, #11100e);
+    cursor: pointer;
+    box-shadow:
+      inset 0 0 14px rgba(0, 0, 0, 0.42),
+      0 0 0 2px rgba(223, 190, 120, 0.18);
+    transition:
+      border-color var(--ts-motion-fast, 160ms) ease,
+      box-shadow var(--ts-motion-fast, 160ms) ease,
+      transform var(--ts-motion-fast, 160ms) var(--ts-ease-out, ease-out);
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:hover,
+  button:focus-visible {
+    border-color: var(--ts-accent-gold, #d6b86a);
+    box-shadow:
+      inset 0 0 14px rgba(0, 0, 0, 0.36),
+      0 0 0 2px rgba(223, 190, 120, 0.3),
+      0 0 16px var(--ts-glow-candle-soft, rgba(247, 208, 120, 0.16));
+    transform: translateY(-2px);
+  }
+
+  button:focus-visible {
+    outline: 3px solid var(--ts-focus-ring, #f0d990);
+    outline-offset: 2px;
+  }
+
+  .icon {
+    width: 72%;
+    height: 72%;
+  }
+}
+
+.reference-npc-empty {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px dashed rgba(61, 45, 31, 0.52);
+  border-radius: 7px;
+  color: #4d392b;
+  background: rgba(255, 250, 234, 0.34);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+
+  &:hover,
+  &:focus-visible {
+    border-color: rgba(101, 73, 43, 0.86);
+    background: rgba(255, 250, 234, 0.7);
+  }
+}
+
+.reference-npc-empty-text {
+  margin: 0;
+  color: #806957;
+  font-size: 12px;
+}
